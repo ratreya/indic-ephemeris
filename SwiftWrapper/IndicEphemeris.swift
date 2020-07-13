@@ -129,35 +129,69 @@ public class IndicEphemeris {
         return Position(logitude: ascmc[0])
     }
 
-    static let dashaOrder: [Planet] = [.SouthNode, .Venus, .Sun, .Moon, .Mars, .NorthNode, .Jupiter, .Saturn, .Mercury]
+    internal static let dashaOrder: [Planet] = [.SouthNode, .Venus, .Sun, .Moon, .Mars, .NorthNode, .Jupiter, .Saturn, .Mercury]
+
     internal enum DashaStart {
         case MahaDasha(planet: Planet)
         case Moon(position: Position)
     }
     
-    internal func dashas(for interval: DateInterval, starting from: DashaStart) -> [(DateInterval, Planet)] {
-        var first: (DateInterval, Planet)
+    internal func dashas(for interval: DateInterval, starting from: DashaStart, level: Int) -> [MetaDasha] {
+        // Specially handle the first period
+        var firstPeriod: DateInterval
+        var firstPlanet: Planet
         switch from {
         case .MahaDasha(let planet):
-            first = (DateInterval(start: interval.start, duration: Double(planet.dashaPeriod)/120.0 * interval.duration), planet)
+            firstPeriod = DateInterval(start: interval.start, duration: Double(planet.dashaPeriod)/120.0 * interval.duration)
+            firstPlanet = planet
         case .Moon(let position):
             let natal = position.nakshatraLocation()
             let secondsElapsed = natal.degrees*60*60 + natal.minutes*60 + natal.seconds
             let total = Double(natal.nakshatra.ruler.dashaPeriod)/120.0 * interval.duration
             let remaining = (48000.0 - Double(secondsElapsed))/48000.0 * total  // 48,000 seconds per nakshatra
-            first = (DateInterval(start: interval.start, duration: remaining), natal.nakshatra.ruler) // 31,536,000 seconds in one year
+            firstPeriod = DateInterval(start: interval.start, duration: remaining)  // 31,536,000 seconds in one year
+            firstPlanet = natal.nakshatra.ruler
         }
-        var result = [(DateInterval, Planet)]()
-        result.append(first)
-        var index = IndicEphemeris.dashaOrder.firstIndex(of: first.1)!
-        var date = first.0.end
+        var firstDasha: MetaDasha
+        var subDashas: [MetaDasha]? = nil
+        if level <= 1 {
+            subDashas = dashas(for: firstPeriod, starting: from, level: level + 1)
+        }
+        firstDasha = MetaDasha(period: firstPeriod, planet: firstPlanet, subDasha: subDashas)
+        // Rest of the periods naturally follow in order
+        var result = [firstDasha]
+        var next = IndicEphemeris.dashaOrder.firstIndex(of: firstPlanet)!
+        var date = firstPeriod.end
         while date < interval.end {
-            index = (index + 1) % IndicEphemeris.dashaOrder.count
-            let planet = IndicEphemeris.dashaOrder[index]
-            let next = (DateInterval(start: interval.start, duration: Double(planet.dashaPeriod)/120.0 * interval.duration), planet)
-            result.append(next)
-            date = next.0.end
+            next = (next + 1) % IndicEphemeris.dashaOrder.count
+            let nextPlanet = IndicEphemeris.dashaOrder[next]
+            let nextPeriod = DateInterval(start: date, duration: Double(nextPlanet.dashaPeriod)/120.0 * interval.duration)
+            var nextSubDashas: [MetaDasha]? = nil
+            if level <= 1 {
+                nextSubDashas = dashas(for: nextPeriod, starting: .MahaDasha(planet: nextPlanet), level: level + 1)
+            }
+            result.append(MetaDasha(period: nextPeriod, planet: nextPlanet, subDasha: nextSubDashas))
+            date = nextPeriod.end
         }
         return result
+    }
+
+    public func dashas() throws -> [MetaDasha] {
+        return dashas(for: DateInterval(start: dateUTC, duration: Double(120*365*24*60*60)), starting: .Moon(position: try position(for: .Moon)), level: 0)
+    }
+    
+    public func dasha(for date: Date) throws -> (mahaDasha: (DateInterval, Planet), antarDasha: (DateInterval, Planet), paryantarDasha: (DateInterval, Planet)) {
+        var mahas = try dashas()
+        var result = [(DateInterval, Planet)]()
+        for _ in 0...2 {
+            for maha in mahas {
+                if maha.period.contains(date) {
+                    result.append((maha.period, maha.planet))
+                    mahas = maha.subDasha ?? []
+                    break
+                }
+            }
+        }
+        return (result[0], result[1], result[2])
     }
 }

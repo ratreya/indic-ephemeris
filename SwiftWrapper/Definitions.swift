@@ -163,6 +163,22 @@ public struct Place {
     }
 }
 
+public class MetaDasha: CustomStringConvertible {
+    let period: DateInterval
+    let planet: Planet
+    let subDasha: [MetaDasha]?
+
+    public var description: String {
+        return "Period: \(period), Planet: \(planet)"
+    }
+    
+    internal init(period: DateInterval, planet: Planet, subDasha: [MetaDasha]? = nil) {
+        self.period = period
+        self.planet = planet
+        self.subDasha = subDasha
+    }
+}
+
 public enum Ayanamsha: Int, CaseIterable {
     case FaganBradley = 0, Lahiri, Deluce, Raman, Ushashashi, Krishnamurti, DjwhalKhul, Yukteshwar, JnBhasin, BabylKugler1, BabylKugler2, BabylKugler3, BabylHuber, BabylEtpsc, Aldebaran15Tau, Hipparchos, Sassanian, Galcent0Sag, J2000, J1900, B1950, Suryasiddhanta, SuryasiddhantaMsun, Aryabhata, AryabhataMsun, SsRevati, SsCitra, TrueCitra, TrueRevati, TruePushya, GalcentRgbrand, GalequIau1958, GalequTrue, GalequMula, GalalignMardyks, TrueMula, GalcentMulaWilhelm, Aryabhata522, BabylBritton, TrueSheoran, GalcentCochrane, GalequFiorenza, ValensMoon
 }

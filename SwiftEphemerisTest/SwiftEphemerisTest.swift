@@ -34,4 +34,9 @@ class SwiftEphemerisTest: XCTestCase {
             print("\(planet): \(try ephemeris!.position(for: planet).houseLocation())")
         }
     }
+    
+    func testDashas() throws {
+        print(try ephemeris!.dashas())
+        print(try ephemeris!.dasha(for: Date().advanced(by: 5*365*24*60*60)))
+    }
 }

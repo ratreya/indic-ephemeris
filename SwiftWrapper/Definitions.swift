@@ -93,7 +93,7 @@ public struct Position {
      */
     public let speed: Double?
     
-    public init(logitude: Double, latitude: Double? = nil, distance: Double? = nil, speed: Double? = nil) {
+    internal init(logitude: Double, latitude: Double? = nil, distance: Double? = nil, speed: Double? = nil) {
         self.longitude = logitude
         self.latitude = latitude
         self.distance = distance
@@ -138,7 +138,7 @@ public struct Phase {
     public let diameter: Double
     public let magnitude: Double
 
-    public init(angle: Double, illunation: Double, elongation: Double, diameter: Double, magnitude: Double) {
+    internal init(angle: Double, illunation: Double, elongation: Double, diameter: Double, magnitude: Double) {
         self.angle = angle
         self.illunation = illunation
         self.elongation = elongation
@@ -163,19 +163,33 @@ public struct Place {
     }
 }
 
+public enum DashaType: Int, CaseIterable {
+    case Maha=0, Antar, Pratyantar
+}
+
 public class MetaDasha: CustomStringConvertible {
-    let period: DateInterval
-    let planet: Planet
-    let subDasha: [MetaDasha]?
+    public let period: DateInterval
+    public let planet: Planet
+    public let type: DashaType
+    internal (set) public var subDasha: [MetaDasha]?
+    unowned private (set) public var supraDasha: MetaDasha?
 
     public var description: String {
-        return "Period: \(period), Planet: \(planet)"
+        var response = "Period: \(period), Planet: \(planet), Type: \(type)"
+        if let sub = subDasha {
+            let indent = "\n" + String(repeating: "\t", count: type.rawValue + 1)
+            response += indent
+            response += sub.map( { $0.description } ).joined(separator: indent)
+        }
+        return response
     }
     
-    internal init(period: DateInterval, planet: Planet, subDasha: [MetaDasha]? = nil) {
+    internal init(period: DateInterval, planet: Planet, type: DashaType, subDasha: [MetaDasha]? = nil) {
         self.period = period
         self.planet = planet
         self.subDasha = subDasha
+        self.type = type
+        self.subDasha?.forEach() { $0.supraDasha = self }
     }
 }
 

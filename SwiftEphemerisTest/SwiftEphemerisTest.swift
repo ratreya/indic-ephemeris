@@ -36,7 +36,9 @@ class SwiftEphemerisTest: XCTestCase {
     }
     
     func testDashas() throws {
-        print(try ephemeris!.dashas())
-        print(try ephemeris!.dasha(for: Date().advanced(by: 5*365*24*60*60)))
+        let range = DateInterval(start: Date(), duration: 30*24*60*60)
+        print(range)
+        print(try ephemeris!.dashas(overlapping: range).map( { $0.description } ).joined(separator: "\n"))
+        print(try ephemeris!.dashas().map( { $0.description } ).joined(separator: "\n"))
     }
 }

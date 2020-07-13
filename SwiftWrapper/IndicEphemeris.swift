@@ -157,7 +157,7 @@ public class IndicEphemeris {
         if level <= 1 {
             subDashas = dashas(for: firstPeriod, starting: from, level: level + 1)
         }
-        firstDasha = MetaDasha(period: firstPeriod, planet: firstPlanet, subDasha: subDashas)
+        firstDasha = MetaDasha(period: firstPeriod, planet: firstPlanet, type: DashaType(rawValue: level)!, subDasha: subDashas)
         // Rest of the periods naturally follow in order
         var result = [firstDasha]
         var next = IndicEphemeris.dashaOrder.firstIndex(of: firstPlanet)!
@@ -170,7 +170,7 @@ public class IndicEphemeris {
             if level <= 1 {
                 nextSubDashas = dashas(for: nextPeriod, starting: .MahaDasha(planet: nextPlanet), level: level + 1)
             }
-            result.append(MetaDasha(period: nextPeriod, planet: nextPlanet, subDasha: nextSubDashas))
+            result.append(MetaDasha(period: nextPeriod, planet: nextPlanet, type: DashaType(rawValue: level)!, subDasha: nextSubDashas))
             date = nextPeriod.end
         }
         return result
@@ -180,6 +180,18 @@ public class IndicEphemeris {
         return dashas(for: DateInterval(start: dateUTC, duration: Double(120*365*24*60*60)), starting: .Moon(position: try position(for: .Moon)), level: 0)
     }
     
+    public func dashas(overlapping range: DateInterval) throws -> [MetaDasha] {
+        var mahas = try dashas()
+        mahas = mahas.filter() { (maha) -> Bool in maha.period.intersects(range) }
+        for maha in mahas {
+            maha.subDasha = maha.subDasha?.filter() { (antar) -> Bool in antar.period.intersects(range) }
+            for antar in maha.subDasha! {
+                antar.subDasha = antar.subDasha?.filter()  { (patyantar) -> Bool in patyantar.period.intersects(range) }
+            }
+        }
+        return mahas
+    }
+
     public func dasha(for date: Date) throws -> (mahaDasha: (DateInterval, Planet), antarDasha: (DateInterval, Planet), paryantarDasha: (DateInterval, Planet)) {
         var mahas = try dashas()
         var result = [(DateInterval, Planet)]()

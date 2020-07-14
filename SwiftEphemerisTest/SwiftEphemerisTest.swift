@@ -35,10 +35,21 @@ class SwiftEphemerisTest: XCTestCase {
         }
     }
     
+    func testTransits() throws {
+        print(try ephemeris!.transit(of: .Saturn, through: try ephemeris!.position(for: .Moon).houseLocation().house))
+    }
+    
     func testDashas() throws {
         let range = DateInterval(start: Date(), duration: 30*24*60*60)
         print(range)
         print(try ephemeris!.dashas(overlapping: range).map( { $0.description } ).joined(separator: "\n"))
         print(try ephemeris!.dashas().map( { $0.description } ).joined(separator: "\n"))
+    }
+    
+    func testMaxSpeed() throws {
+        for planet in Planet.allCases {
+            let max = try ephemeris!.positions(for: planet, during: DateInterval(start: Date(), duration: 100*365*24*60*60), every: 1, unit: .day).map( { $0.1.speed! } ).max()
+            print("\(planet): \(max?.description ?? "nil")")
+        }
     }
 }

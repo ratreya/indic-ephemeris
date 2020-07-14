@@ -163,36 +163,10 @@ public struct Place {
     }
 }
 
-public enum DashaType: Int, CaseIterable {
-    case Maha=0, Antar, Pratyantar
-}
-
-public class MetaDasha: CustomStringConvertible {
-    public let period: DateInterval
-    public let planet: Planet
-    public let type: DashaType
-    internal (set) public var subDasha: [MetaDasha]?
-    unowned private (set) public var supraDasha: MetaDasha?
-
-    public var description: String {
-        var response = "Period: \(period), Planet: \(planet), Type: \(type)"
-        if let sub = subDasha {
-            let indent = "\n" + String(repeating: "\t", count: type.rawValue + 1)
-            response += indent
-            response += sub.map( { $0.description } ).joined(separator: indent)
-        }
-        return response
-    }
-    
-    internal init(period: DateInterval, planet: Planet, type: DashaType, subDasha: [MetaDasha]? = nil) {
-        self.period = period
-        self.planet = planet
-        self.subDasha = subDasha
-        self.type = type
-        self.subDasha?.forEach() { $0.supraDasha = self }
-    }
-}
-
 public enum Ayanamsha: Int, CaseIterable {
     case FaganBradley = 0, Lahiri, Deluce, Raman, Ushashashi, Krishnamurti, DjwhalKhul, Yukteshwar, JnBhasin, BabylKugler1, BabylKugler2, BabylKugler3, BabylHuber, BabylEtpsc, Aldebaran15Tau, Hipparchos, Sassanian, Galcent0Sag, J2000, J1900, B1950, Suryasiddhanta, SuryasiddhantaMsun, Aryabhata, AryabhataMsun, SsRevati, SsCitra, TrueCitra, TrueRevati, TruePushya, GalcentRgbrand, GalequIau1958, GalequTrue, GalequMula, GalalignMardyks, TrueMula, GalcentMulaWilhelm, Aryabhata522, BabylBritton, TrueSheoran, GalcentCochrane, GalequFiorenza, ValensMoon
 }
+
+internal let lifetimeInYears = 120.0
+internal let lifetimeInSeconds = lifetimeInYears * 365.0 * 24.0 * 60.0 * 60.0
+internal let secondsPerNakshatra = 48000.0

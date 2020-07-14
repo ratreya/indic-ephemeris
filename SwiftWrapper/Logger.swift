@@ -1,12 +1,3 @@
-/*
- * LipikaEngine is a multi-codepoint, user-configurable, phonetic, Transliteration Engine.
- * Copyright (C) 2017 Ranganath Atreya
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- */
-
 import Foundation
 
 let keyBase = Bundle.main.bundleIdentifier ?? "SwiftEphemeris"

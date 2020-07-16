@@ -9,14 +9,23 @@
 import Foundation
 
 public enum DashaType: Int, CaseIterable {
-    case Maha=0, Antar, Pratyantar
+    case Mahadasha=0, Antardasha, Pratyantardasha
+    
+    static func < (left: DashaType, right: DashaType) -> Bool { left.rawValue < right.rawValue }
+    static func + (left: DashaType, right: Int) -> DashaType { DashaType(rawValue: max(left.rawValue + right, DashaType.Pratyantardasha.rawValue))! }
 }
+
+let dashaOrder: [Planet] = [.SouthNode, .Venus, .Sun, .Moon, .Mars, .NorthNode, .Jupiter, .Saturn, .Mercury]
 
 public class MetaDasha: CustomStringConvertible {
     public let period: DateInterval
     public let planet: Planet
     public let type: DashaType
-    internal (set) public var subDasha: [MetaDasha]?
+    internal (set) public var subDasha: [MetaDasha]? {
+        didSet {
+            self.subDasha?.forEach() { $0.supraDasha = self }
+        }
+    }
     unowned private (set) public var supraDasha: MetaDasha?
 
     public var description: String {
@@ -34,64 +43,62 @@ public class MetaDasha: CustomStringConvertible {
         self.planet = planet
         self.subDasha = subDasha
         self.type = type
-        self.subDasha?.forEach() { $0.supraDasha = self }
     }
 }
 
 extension IndicEphemeris {
-    internal static let dashaOrder: [Planet] = [.SouthNode, .Venus, .Sun, .Moon, .Mars, .NorthNode, .Jupiter, .Saturn, .Mercury]
-
-    internal enum DashaStart {
-        case MahaDasha(planet: Planet)
-        case Moon(position: Position)
-    }
-
-    internal func dashas(for interval: DateInterval, starting from: DashaStart, level: Int) -> [MetaDasha] {
-        // Specially handle the first period
-        var firstPeriod: DateInterval
-        var firstPlanet: Planet
-        switch from {
-        case .MahaDasha(let planet):
-            firstPeriod = DateInterval(start: interval.start, duration: Double(planet.dashaPeriod)/lifetimeInYears * interval.duration)
-            firstPlanet = planet
-        case .Moon(let position):
-            let natal = position.nakshatraLocation()
-            let secondsElapsed = natal.degrees*60*60 + natal.minutes*60 + natal.seconds
-            let total = Double(natal.nakshatra.ruler.dashaPeriod)/lifetimeInYears * interval.duration
-            let remaining = (secondsPerNakshatra - Double(secondsElapsed))/secondsPerNakshatra * total
-            firstPeriod = DateInterval(start: interval.start, duration: remaining)
-            firstPlanet = natal.nakshatra.ruler
+    
+    /**
+     - Parameters:
+        - duration: The time interval within which subdashas are desired. Usually, this is the duration of the uber-Dasha. For Maha-Dasha, this is 120 years starting from birth minus the `elapsed` time.
+        - starting: The planet from which to start. This is the planet of the uber-Dasha. For Maha-Dasha, this is the ruler of the nakshatra that is occupied by the moon.
+        - elapsed: Number of time seconds elapsed since the `starting` planet's cusp to the beginning of `duration`.
+        - depth: The top-level `DashaType` that needs to be calculated. Initial call should always pass in `.Mahadasha`.
+        - maxDepth: The depth in `DashaType` up to which sub-Dashas are desired.
+     */
+    internal func dashas(interval: DateInterval, starting: Planet, elapsed: Double, depth: DashaType = .Mahadasha, maxDepth: DashaType = .Pratyantardasha) -> [MetaDasha] {
+        let totalDuration = interval.duration + elapsed
+        var firstPlanet = starting
+        var index = dashaOrder.firstIndex(of: starting)!
+        var residual = elapsed
+        while residual >= 0 {
+            firstPlanet = dashaOrder[index]
+            residual -= firstPlanet.dashaRatio * totalDuration
+            index = (index + 1) % dashaOrder.count
         }
-        var firstDasha: MetaDasha
-        var subDashas: [MetaDasha]? = nil
-        if level <= 1 {
-            subDashas = dashas(for: firstPeriod, starting: from, level: level + 1)
+        let firstPeriod = DateInterval(start: interval.start, duration: abs(residual))
+        let firstDasha = MetaDasha(period: firstPeriod, planet: firstPlanet, type: depth)
+        if depth < maxDepth {
+            let subElapsed = firstPlanet.dashaRatio * totalDuration + residual
+            firstDasha.subDasha = dashas(interval: firstPeriod, starting: firstPlanet, elapsed: subElapsed, depth: depth + 1, maxDepth: maxDepth)
         }
-        firstDasha = MetaDasha(period: firstPeriod, planet: firstPlanet, type: DashaType(rawValue: level)!, subDasha: subDashas)
         // Rest of the periods naturally follow in order
         var result = [firstDasha]
-        var next = IndicEphemeris.dashaOrder.firstIndex(of: firstPlanet)!
+        var next = dashaOrder.firstIndex(of: firstPlanet)!
         var date = firstPeriod.end
         while date < interval.end {
-            next = (next + 1) % IndicEphemeris.dashaOrder.count
-            let nextPlanet = IndicEphemeris.dashaOrder[next]
-            let nextPeriod = DateInterval(start: date, duration: Double(nextPlanet.dashaPeriod)/lifetimeInYears * interval.duration)
-            var nextSubDashas: [MetaDasha]? = nil
-            if level <= 1 {
-                nextSubDashas = dashas(for: nextPeriod, starting: .MahaDasha(planet: nextPlanet), level: level + 1)
+            next = (next + 1) % dashaOrder.count
+            let nextPlanet = dashaOrder[next]
+            let nextPeriod = DateInterval(start: date, duration: nextPlanet.dashaRatio * totalDuration)
+            let subDasha = MetaDasha(period: nextPeriod, planet: nextPlanet, type: depth)
+            if depth < maxDepth {
+                subDasha.subDasha = dashas(interval: nextPeriod, starting: nextPlanet, elapsed: 0, depth: depth + 1, maxDepth: maxDepth)
             }
-            result.append(MetaDasha(period: nextPeriod, planet: nextPlanet, type: DashaType(rawValue: level)!, subDasha: nextSubDashas))
+            result.append(subDasha)
             date = nextPeriod.end
         }
         return result
     }
 
-    public func dashas() throws -> [MetaDasha] {
-        return dashas(for: DateInterval(start: dateUTC, duration: lifetimeInSeconds), starting: .Moon(position: try position(for: .Moon)), level: 0)
+    public func dashas(maxDepth: DashaType = .Pratyantardasha) throws -> [MetaDasha] {
+        let moon = try position(for: .Moon).nakshatraLocation()
+        let elapsedAngle = Double(moon.degrees*3600 + moon.minutes*60 + moon.seconds)
+        let elapsedTime = elapsedAngle/secondsPerNakshatra * moon.nakshatra.ruler.dashaRatio * lifetimeInSeconds
+        return dashas(interval: DateInterval(start: dateUTC, duration: lifetimeInSeconds-elapsedTime), starting: moon.nakshatra.ruler, elapsed: elapsedTime, maxDepth: maxDepth)
     }
 
-    public func dashas(overlapping range: DateInterval) throws -> [MetaDasha] {
-        var mahas = try dashas()
+    public func dashas(overlapping range: DateInterval, maxDepth: DashaType = .Pratyantardasha) throws -> [MetaDasha] {
+        var mahas = try dashas(maxDepth: maxDepth)
         mahas = mahas.filter() { (maha) -> Bool in maha.period.intersects(range) }
         for maha in mahas {
             maha.subDasha = maha.subDasha?.filter() { (antar) -> Bool in antar.period.intersects(range) }
@@ -102,8 +109,8 @@ extension IndicEphemeris {
         return mahas
     }
 
-    public func dasha(for date: Date) throws -> (mahaDasha: (DateInterval, Planet), antarDasha: (DateInterval, Planet), paryantarDasha: (DateInterval, Planet)) {
-        var mahas = try dashas()
+    public func dasha(for date: Date, maxDepth: DashaType = .Pratyantardasha) throws -> (mahaDasha: (DateInterval, Planet), antarDasha: (DateInterval, Planet), paryantarDasha: (DateInterval, Planet)) {
+        var mahas = try dashas(maxDepth: maxDepth)
         var result = [(DateInterval, Planet)]()
         for _ in 0...2 {
             for maha in mahas {

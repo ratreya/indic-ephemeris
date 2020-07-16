@@ -14,27 +14,40 @@ enum EphemerisError: Error {
 
 public enum House: Int, CaseIterable {
     case Aries = 0, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpio, Sagittarius, Capricorn, Aquarius, Pisces
+    
+    static func + (left: House, right: Int) -> House {
+        House(rawValue: (left.rawValue + right) % 12)!
+    }
+
+    static func - (left: House, right: Int) -> House {
+        return left + (12 - (right % 12))
+    }
 }
 
 public enum Planet: Int, CaseIterable {
     case Sun = 0, Moon, Mercury, Venus, Mars, Jupiter, Saturn, NorthNode, SouthNode
 }
 
+/**
+ For all position to time calculations, we are sampling position at 30 degrees (1 house) of spatial granularity.
+ So, temporal sampling should be at such an interval within which the planet will move less than 30 degrees.
+*/
 extension Planet {
-    private static let properties: [Planet: (dashaPeriod: Int, symbol:  Character)] = [
-        .Sun: (6, "\u{2609}"),
-        .Moon: (10, "\u{263D}"),
-        .Mercury: (17, "\u{263F}"),
-        .Venus: (20, "\u{2640}"),
-        .Mars: (7, "\u{2642}"),
-        .Jupiter: (16, "\u{2643}"),
-        .Saturn: (19, "\u{2644}"),
-        .NorthNode: (18, "\u{260A}"),
-        .SouthNode: (7, "\u{260B}")
+    private static let properties: [Planet: (dashaRatio: Double, symbol:  Character, sampling: Calendar.Component)] = [
+        .Sun: (6/120, "\u{2609}", .day),
+        .Moon: (10/120, "\u{263D}", .day),
+        .Mercury: (17/120, "\u{263F}", .day),
+        .Venus: (20/120, "\u{2640}", .day),
+        .Mars: (7/120, "\u{2642}", .month),
+        .Jupiter: (16/120, "\u{2643}", .month),
+        .Saturn: (19/120, "\u{2644}", .month),
+        .NorthNode: (18/120, "\u{260A}", .year),
+        .SouthNode: (7/120, "\u{260B}", .year)
     ]
     
-    public var dashaPeriod: Int { Planet.properties[self]!.dashaPeriod }
+    public var dashaRatio: Double { Planet.properties[self]!.dashaRatio }
     public var symbol: Character { Planet.properties[self]!.symbol }
+    public var sampling: Calendar.Component { Planet.properties[self]!.sampling }
 }
 
 public enum Nakshatra: Int, CaseIterable {

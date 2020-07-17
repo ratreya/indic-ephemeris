@@ -69,14 +69,21 @@ public class IndicEphemeris {
         }
         var result = [(Date, Position)]()
         for date in dates {
-            if swe_calc_ut(try julianDay(for: date), Int32(planet.rawValue), SEFLG_SWIEPH | SEFLG_TOPOCTR | SEFLG_SIDEREAL | SEFLG_SPEED, positions, error) < 0 {
+            // For South Node, get North Node position and invert it
+            let ordinal = planet == .SouthNode ? Planet.NorthNode.rawValue : planet.rawValue
+            if swe_calc_ut(try julianDay(for: date), Int32(ordinal), SEFLG_SWIEPH | SEFLG_TOPOCTR | SEFLG_SIDEREAL | SEFLG_SPEED, positions, error) < 0 {
                 throw EphemerisError.runtimeError(String(cString: error))
             }
             let message = String(cString: error)
             if !message.isEmpty {
                 Logger.log.warning(message)
             }
-            result.append((date, Position(logitude: positions[0], latitude: positions[1], distance: positions[2], speed: positions[3])))
+            if planet == .SouthNode {
+                result.append((date, Position(logitude: (positions[0] + 180).truncatingRemainder(dividingBy: 360), latitude: -positions[1], distance: positions[2], speed: -positions[3])))
+            }
+            else {
+                result.append((date, Position(logitude: positions[0], latitude: positions[1], distance: positions[2], speed: positions[3])))
+            }
         }
         return result
     }

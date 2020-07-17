@@ -8,53 +8,55 @@
 
 import Foundation
 
-/**
- We are sampling position at 30 degrees (1 house) of spatial granularity.
- So, temporal sampling should be at that interval within which the planet will move less than 30 degrees.
- - Note: Max speed used for calculations in comments
- */
-let sampling: [Planet: Calendar.Component] = [
-    .Moon: .day,        // 20.81 degrees per day
-    .Mercury: .day,     // 2.22 degrees per day
-    .Venus: .day,       // 1.27 degrees per day
-    .Sun: .day,         // 1.04 degrees per day
-    .Mars: .month,      // 0.80 degrees per day
-    .Jupiter: .month,   // 0.25 degrees per day
-    .Saturn: .month,    // 0.14 degrees per day
-    .NorthNode: .year,  // 0.07 degrees per day
-    .SouthNode: .year   // 0.07 degrees per day
-]
+public struct HouseRange {
+    let lowerBound: House
+    let count: Int
+    let constituent: Set<House>
+
+    public init(lowerBound: House, count: Int) {
+        self.lowerBound = lowerBound
+        self.count = count
+        self.constituent = Set(Array(0..<count).map({ House(rawValue: (lowerBound.rawValue + $0) % 12)! }))
+    }
+    
+    public func contains(_ house: House) -> Bool { constituent.contains(house) }
+    public func inverted() -> HouseRange { HouseRange(lowerBound: lowerBound + count, count: 12-count) }
+}
 
 extension IndicEphemeris {
     static let granularityOrder: [Calendar.Component] = [.year, .month, .day, .hour, .minute, .second]
     
-    internal func refineEdge(transit house: House, in range: DateInterval, for planet: Planet, from unit: Calendar.Component) throws -> Date? {
+    internal func refineEdge(transit houses: HouseRange, in range: DateInterval, for planet: Planet, from unit: Calendar.Component) throws -> Date? {
         if unit == .second { return range.start }
         let next = IndicEphemeris.granularityOrder[IndicEphemeris.granularityOrder.firstIndex(of: unit)!.advanced(by: 1)]
         let timePositions = try positions(for: planet, during: range, every: 1, unit: next)
-        if let index = try timePositions.firstIndex(where: { try $0.1.houseLocation().house == house }) {
+        if let index = try timePositions.firstIndex(where: { try houses.contains($0.1.houseLocation().house) }) {
             if index == 0 { return timePositions[index].0 }
-            return try refineEdge(transit: house, in: DateInterval(start: timePositions[index - 1].0, end: timePositions[index].0.advanced(by: 1)), for: planet, from: next)
+            return try refineEdge(transit: houses, in: DateInterval(start: timePositions[index - 1].0, end: timePositions[index].0.advanced(by: 1)), for: planet, from: next)
         }
         return nil
     }
     
-    public func transit(of planet: Planet, through house: House) throws -> [DateInterval] {
-        let dailyPositions = try positions(for: planet, during: DateInterval(start: dateUTC, duration: lifetimeInSeconds), every: 1, unit: sampling[planet]!)
+    public func transit(of planet: Planet, through houses: HouseRange, during range: DateInterval) throws -> [DateInterval] {
+        let timePositions = try positions(for: planet, during: range, every: 1, unit: planet.sampling)
         var result = [DateInterval]()
         var intervalStart: Date? = nil
-        for index in dailyPositions.indices {
-            let (day, position) = dailyPositions[index]
+        for index in timePositions.indices {
+            let (time, position) = timePositions[index]
             let currentHouse = try position.houseLocation().house
-            if currentHouse == house, intervalStart == nil {
-                intervalStart = index == 0 ? day : try refineEdge(transit: house, in: DateInterval(start: dailyPositions[index-1].0, end: day.advanced(by: 1)), for: planet, from: sampling[planet]!)!
+            if houses.contains(currentHouse), intervalStart == nil {
+                intervalStart = index == 0 ? time : try refineEdge(transit: houses, in: DateInterval(start: timePositions[index-1].0, end: time.advanced(by: 1)), for: planet, from: planet.sampling)!
             }
-            if let start = intervalStart, currentHouse != house {
-                let refined = try refineEdge(transit: currentHouse, in: DateInterval(start: dailyPositions[index-1].0, end: day.advanced(by: 1)), for: planet, from: sampling[planet]!)!
+            if let start = intervalStart, !houses.contains(currentHouse) {
+                let refined = try refineEdge(transit: houses.inverted(), in: DateInterval(start: timePositions[index-1].0, end: time.advanced(by: 1)), for: planet, from: planet.sampling)!
                 result.append(DateInterval(start: start, end: refined))
                 intervalStart = nil
             }
         }
         return result
+    }
+    
+    public func transit(of planet: Planet, through houses: HouseRange) throws -> [DateInterval] {
+        return try transit(of: planet, through: houses, during: DateInterval(start: dateUTC, duration: lifetimeInSeconds))
     }
 }

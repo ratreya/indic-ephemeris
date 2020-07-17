@@ -25,7 +25,8 @@ public enum House: Int, CaseIterable {
 }
 
 public enum Planet: Int, CaseIterable {
-    case Sun = 0, Moon, Mercury, Venus, Mars, Jupiter, Saturn, NorthNode, SouthNode
+    case Sun = 0, Moon, Mercury, Venus, Mars, Jupiter, Saturn, NorthNode=11,
+        SouthNode=108 // Some number that is invalid for SWE; we will special case it
 }
 
 /**

@@ -1,15 +1,7 @@
-//
-//  SwiftEphemerisTest.swift
-//  SwiftEphemerisTest
-//
-//  Created by Atreya Ranganath on 7/10/20.
-//  Copyright © 2020 Daivajnanam. All rights reserved.
-//
-
 import XCTest
-@testable import SwiftEphemeris
+@testable import IndicEphemeris
 
-class SwiftEphemerisTest: XCTestCase {
+class IndicEphemerisTest: XCTestCase {
     var ephemeris: IndicEphemeris?
     
     override func setUpWithError() throws {

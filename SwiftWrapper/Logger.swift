@@ -1,6 +1,6 @@
 import Foundation
 
-let keyBase = Bundle.main.bundleIdentifier ?? "SwiftEphemeris"
+let keyBase = Bundle.main.bundleIdentifier ?? "IndicEphemeris"
 
 func getThreadLocalData(key: String) -> Any? {
     let fullKey: NSString = "\(keyBase).\(key)" as NSString

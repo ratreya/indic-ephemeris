@@ -30,8 +30,8 @@
 		A500F90E24B56D5D00D0BEC2 /* swepcalc.c in Sources */ = {isa = PBXBuildFile; fileRef = A500F90C24B56D5D00D0BEC2 /* swepcalc.c */; };
 		A500F90F24B56D5D00D0BEC2 /* swepcalc.h in Headers */ = {isa = PBXBuildFile; fileRef = A500F90D24B56D5D00D0BEC2 /* swepcalc.h */; };
 		A500F91124B56E2D00D0BEC2 /* IndicEphemeris.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500F91024B56E2D00D0BEC2 /* IndicEphemeris.swift */; };
-		A5BAF72B24B9135600AB8415 /* SwiftEphemerisTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5BAF72A24B9135600AB8415 /* SwiftEphemerisTest.swift */; };
-		A5BAF73224B9136900AB8415 /* SwiftEphemeris.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A500F8CD24B5695400D0BEC2 /* SwiftEphemeris.framework */; };
+		A5BAF72B24B9135600AB8415 /* IndicEphemerisTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5BAF72A24B9135600AB8415 /* IndicEphemerisTest.swift */; };
+		A5BAF73224B9136900AB8415 /* IndicEphemeris.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A500F8CD24B5695400D0BEC2 /* IndicEphemeris.framework */; };
 		A5BAF73424B94E3E00AB8415 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5BAF73324B94E3D00AB8415 /* Logger.swift */; };
 		A5BAF73624B951F300AB8415 /* EphemerisData in Resources */ = {isa = PBXBuildFile; fileRef = A5BAF73524B951F300AB8415 /* EphemerisData */; };
 		A5BAF73824B989B200AB8415 /* Definitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5BAF73724B989B200AB8415 /* Definitions.swift */; };
@@ -50,7 +50,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		A500F8CD24B5695400D0BEC2 /* SwiftEphemeris.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftEphemeris.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A500F8CD24B5695400D0BEC2 /* IndicEphemeris.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = IndicEphemeris.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A500F8D124B5695400D0BEC2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A500F8D924B56A0500D0BEC2 /* swephlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = swephlib.h; sourceTree = "<group>"; };
 		A500F8DB24B56A0500D0BEC2 /* swepdate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = swepdate.c; sourceTree = "<group>"; };
@@ -76,8 +76,8 @@
 		A500F90D24B56D5D00D0BEC2 /* swepcalc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = swepcalc.h; sourceTree = "<group>"; };
 		A500F91024B56E2D00D0BEC2 /* IndicEphemeris.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicEphemeris.swift; sourceTree = "<group>"; };
 		A500F91224B56F5700D0BEC2 /* Swiss.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; path = Swiss.modulemap; sourceTree = "<group>"; };
-		A5BAF72824B9135600AB8415 /* SwiftEphemerisTest.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftEphemerisTest.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		A5BAF72A24B9135600AB8415 /* SwiftEphemerisTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftEphemerisTest.swift; sourceTree = "<group>"; };
+		A5BAF72824B9135600AB8415 /* IndicEphemerisTest.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IndicEphemerisTest.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A5BAF72A24B9135600AB8415 /* IndicEphemerisTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicEphemerisTest.swift; sourceTree = "<group>"; };
 		A5BAF72C24B9135600AB8415 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A5BAF73324B94E3D00AB8415 /* Logger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		A5BAF73524B951F300AB8415 /* EphemerisData */ = {isa = PBXFileReference; lastKnownFileType = folder; path = EphemerisData; sourceTree = "<group>"; };
@@ -98,7 +98,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A5BAF73224B9136900AB8415 /* SwiftEphemeris.framework in Frameworks */,
+				A5BAF73224B9136900AB8415 /* IndicEphemeris.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -111,7 +111,7 @@
 				A5BAF73524B951F300AB8415 /* EphemerisData */,
 				A500F8D824B569DC00D0BEC2 /* SwissEphemeris */,
 				A500F8CF24B5695400D0BEC2 /* SwiftWrapper */,
-				A5BAF72924B9135600AB8415 /* SwiftEphemerisTest */,
+				A5BAF72924B9135600AB8415 /* IndicEphemerisTest */,
 				A500F8CE24B5695400D0BEC2 /* Products */,
 				A5BAF6FE24B8CC7A00AB8415 /* Frameworks */,
 			);
@@ -120,8 +120,8 @@
 		A500F8CE24B5695400D0BEC2 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A500F8CD24B5695400D0BEC2 /* SwiftEphemeris.framework */,
-				A5BAF72824B9135600AB8415 /* SwiftEphemerisTest.xctest */,
+				A500F8CD24B5695400D0BEC2 /* IndicEphemeris.framework */,
+				A5BAF72824B9135600AB8415 /* IndicEphemerisTest.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -176,13 +176,13 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		A5BAF72924B9135600AB8415 /* SwiftEphemerisTest */ = {
+		A5BAF72924B9135600AB8415 /* IndicEphemerisTest */ = {
 			isa = PBXGroup;
 			children = (
-				A5BAF72A24B9135600AB8415 /* SwiftEphemerisTest.swift */,
+				A5BAF72A24B9135600AB8415 /* IndicEphemerisTest.swift */,
 				A5BAF72C24B9135600AB8415 /* Info.plist */,
 			);
-			path = SwiftEphemerisTest;
+			path = IndicEphemerisTest;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -208,9 +208,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		A500F8CC24B5695400D0BEC2 /* SwiftEphemeris */ = {
+		A500F8CC24B5695400D0BEC2 /* IndicEphemeris */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A500F8D524B5695400D0BEC2 /* Build configuration list for PBXNativeTarget "SwiftEphemeris" */;
+			buildConfigurationList = A500F8D524B5695400D0BEC2 /* Build configuration list for PBXNativeTarget "IndicEphemeris" */;
 			buildPhases = (
 				A500F8C824B5695400D0BEC2 /* Headers */,
 				A500F8C924B5695400D0BEC2 /* Sources */,
@@ -221,14 +221,14 @@
 			);
 			dependencies = (
 			);
-			name = SwiftEphemeris;
+			name = IndicEphemeris;
 			productName = "swift-ephemeris";
-			productReference = A500F8CD24B5695400D0BEC2 /* SwiftEphemeris.framework */;
+			productReference = A500F8CD24B5695400D0BEC2 /* IndicEphemeris.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		A5BAF72724B9135600AB8415 /* SwiftEphemerisTest */ = {
+		A5BAF72724B9135600AB8415 /* IndicEphemerisTest */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A5BAF72D24B9135600AB8415 /* Build configuration list for PBXNativeTarget "SwiftEphemerisTest" */;
+			buildConfigurationList = A5BAF72D24B9135600AB8415 /* Build configuration list for PBXNativeTarget "IndicEphemerisTest" */;
 			buildPhases = (
 				A5BAF72424B9135600AB8415 /* Sources */,
 				A5BAF72524B9135600AB8415 /* Frameworks */,
@@ -239,9 +239,9 @@
 			dependencies = (
 				A5BAF73124B9136300AB8415 /* PBXTargetDependency */,
 			);
-			name = SwiftEphemerisTest;
+			name = IndicEphemerisTest;
 			productName = SwiftEphemerisTest;
-			productReference = A5BAF72824B9135600AB8415 /* SwiftEphemerisTest.xctest */;
+			productReference = A5BAF72824B9135600AB8415 /* IndicEphemerisTest.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -263,7 +263,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A500F8C724B5695400D0BEC2 /* Build configuration list for PBXProject "SwiftEphemeris" */;
+			buildConfigurationList = A500F8C724B5695400D0BEC2 /* Build configuration list for PBXProject "IndicEphemeris" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -276,8 +276,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A500F8CC24B5695400D0BEC2 /* SwiftEphemeris */,
-				A5BAF72724B9135600AB8415 /* SwiftEphemerisTest */,
+				A500F8CC24B5695400D0BEC2 /* IndicEphemeris */,
+				A5BAF72724B9135600AB8415 /* IndicEphemerisTest */,
 			);
 		};
 /* End PBXProject section */
@@ -329,7 +329,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A5BAF72B24B9135600AB8415 /* SwiftEphemerisTest.swift in Sources */,
+				A5BAF72B24B9135600AB8415 /* IndicEphemerisTest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -338,7 +338,7 @@
 /* Begin PBXTargetDependency section */
 		A5BAF73124B9136300AB8415 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = A500F8CC24B5695400D0BEC2 /* SwiftEphemeris */;
+			target = A500F8CC24B5695400D0BEC2 /* IndicEphemeris */;
 			targetProxy = A5BAF73024B9136300AB8415 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -492,8 +492,8 @@
 					"@loader_path/../Frameworks",
 				);
 				MODULEMAP_FILE = SwiftWrapper/Swiss.modulemap;
-				PRODUCT_BUNDLE_IDENTIFIER = com.daivajnanam.SwiftEphemeris;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daivajnanam.IndicEphemeris;
+				PRODUCT_NAME = IndicEphemeris;
 				SKIP_INSTALL = YES;
 				SWIFT_INCLUDE_PATHS = "SwissEphemeris/**";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -522,8 +522,8 @@
 					"@loader_path/../Frameworks",
 				);
 				MODULEMAP_FILE = SwiftWrapper/Swiss.modulemap;
-				PRODUCT_BUNDLE_IDENTIFIER = com.daivajnanam.SwiftEphemeris;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daivajnanam.IndicEphemeris;
+				PRODUCT_NAME = IndicEphemeris;
 				SKIP_INSTALL = YES;
 				SWIFT_INCLUDE_PATHS = "SwissEphemeris/**";
 				SWIFT_VERSION = 5.0;
@@ -537,14 +537,14 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 7JZ87Y4JWT;
-				INFOPLIST_FILE = SwiftEphemerisTest/Info.plist;
+				INFOPLIST_FILE = IndicEphemerisTest/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				PRODUCT_BUNDLE_IDENTIFIER = com.daivajnanam.SwiftEphemerisTest;
+				PRODUCT_BUNDLE_IDENTIFIER = com.daivajnanam.IndicEphemerisTest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
@@ -557,14 +557,14 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 7JZ87Y4JWT;
-				INFOPLIST_FILE = SwiftEphemerisTest/Info.plist;
+				INFOPLIST_FILE = IndicEphemerisTest/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				PRODUCT_BUNDLE_IDENTIFIER = com.daivajnanam.SwiftEphemerisTest;
+				PRODUCT_BUNDLE_IDENTIFIER = com.daivajnanam.IndicEphemerisTest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
@@ -574,7 +574,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A500F8C724B5695400D0BEC2 /* Build configuration list for PBXProject "SwiftEphemeris" */ = {
+		A500F8C724B5695400D0BEC2 /* Build configuration list for PBXProject "IndicEphemeris" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A500F8D324B5695400D0BEC2 /* Debug */,
@@ -583,7 +583,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A500F8D524B5695400D0BEC2 /* Build configuration list for PBXNativeTarget "SwiftEphemeris" */ = {
+		A500F8D524B5695400D0BEC2 /* Build configuration list for PBXNativeTarget "IndicEphemeris" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A500F8D624B5695400D0BEC2 /* Debug */,
@@ -592,7 +592,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A5BAF72D24B9135600AB8415 /* Build configuration list for PBXNativeTarget "SwiftEphemerisTest" */ = {
+		A5BAF72D24B9135600AB8415 /* Build configuration list for PBXNativeTarget "IndicEphemerisTest" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A5BAF72E24B9135600AB8415 /* Debug */,

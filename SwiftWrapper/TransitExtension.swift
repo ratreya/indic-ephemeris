@@ -1,11 +1,3 @@
-//
-//  TransitExtension.swift
-//  SwiftEphemeris
-//
-//  Created by Atreya Ranganath on 7/13/20.
-//  Copyright © 2020 Daivajnanam. All rights reserved.
-//
-
 import Foundation
 
 public struct HouseRange {

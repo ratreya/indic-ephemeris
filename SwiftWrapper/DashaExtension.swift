@@ -1,3 +1,12 @@
+/*
+* IndicEphemeris is a fluent Swift interface to Swiss Ephemeris with Indic Astrology specific extensions.
+* Copyright (C) 2020 Ranganath Atreya
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+*/
+
 import Foundation
 
 public enum DashaType: Int, CaseIterable {
@@ -101,8 +110,8 @@ extension IndicEphemeris {
         return mahas
     }
 
-    public func dasha(for date: Date, maxDepth: DashaType = .Pratyantardasha) throws -> (mahaDasha: (DateInterval, Planet), antarDasha: (DateInterval, Planet), paryantarDasha: (DateInterval, Planet)) {
-        var mahas = try dashas(maxDepth: maxDepth)
+    public func dasha(for date: Date) throws -> (mahaDasha: (DateInterval, Planet), antarDasha: (DateInterval, Planet), paryantarDasha: (DateInterval, Planet)) {
+        var mahas = try dashas()
         var result = [(DateInterval, Planet)]()
         for _ in 0...2 {
             for maha in mahas {

@@ -1,10 +1,11 @@
-//
-//  Ephemeris.swift
-//  swift-ephemeris
-//
-//  Created by Atreya Ranganath on 7/7/20.
-//  Copyright © 2020 Daivajnanam. All rights reserved.
-//
+/*
+* IndicEphemeris is a fluent Swift interface to Swiss Ephemeris with Indic Astrology specific extensions.
+* Copyright (C) 2020 Ranganath Atreya
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+*/
 
 import Foundation
 

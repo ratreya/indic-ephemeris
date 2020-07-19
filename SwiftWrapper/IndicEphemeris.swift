@@ -10,22 +10,25 @@
 import Foundation
 
 public class IndicEphemeris {
+    internal let config: Config
     internal let dateUTC: Date
     internal let place: Place
+    internal let log: Logger
     
     /**
      - Parameters:
         - date: time of birth at local timezone
         - at: `Place` of birth
-        - ayanamsha: optional `Ayanamsha` defaulting to Lahiri
      */
-    public init(date: Date, at: Place, ayanamsha: Ayanamsha = .Lahiri) {
+    public init(date: Date, at: Place, config userConfig: Config? = nil) {
+        self.config = userConfig ?? Config()
+        self.log = Logger(level: config.logLevel)
         self.place = at
         self.dateUTC = Calendar.current.date(byAdding: .second, value: -at.timezone.secondsFromGMT(for: date), to: date)!
         let path = (Bundle(for: IndicEphemeris.self).bundleURL.appendingPathComponent("Resources", isDirectory: true).appendingPathComponent("EphemerisData", isDirectory: true).path as NSString).utf8String
         swe_set_ephe_path(UnsafeMutablePointer<Int8>(mutating: path))
         swe_set_topo(at.longitude, at.latitude, at.altitude)
-        swe_set_sid_mode(Int32(ayanamsha.rawValue), 0, 0)
+        swe_set_sid_mode(Int32(config.ayanamsha.rawValue), 0, 0)
     }
     
     deinit {
@@ -45,7 +48,7 @@ public class IndicEphemeris {
         }
         let message = String(cString: error)
         if !message.isEmpty {
-            Logger.log.warning(message)
+            log.warning(message)
         }
         return times[1]
     }
@@ -77,7 +80,7 @@ public class IndicEphemeris {
             }
             let message = String(cString: error)
             if !message.isEmpty {
-                Logger.log.warning(message)
+                log.warning(message)
             }
             if planet == .SouthNode {
                 result.append((date, Position(logitude: (positions[0] + 180).truncatingRemainder(dividingBy: 360), latitude: -positions[1], distance: positions[2], speed: -positions[3])))
@@ -111,7 +114,7 @@ public class IndicEphemeris {
             }
             let message = String(cString: error)
             if !message.isEmpty {
-                Logger.log.warning(message)
+                log.warning(message)
             }
             result.append((date, Phase(angle: response[0], illunation: response[1], elongation: response[2], diameter: response[3], magnitude: response[4])))
         }

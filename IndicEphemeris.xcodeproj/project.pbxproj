@@ -30,6 +30,7 @@
 		A500F90E24B56D5D00D0BEC2 /* swepcalc.c in Sources */ = {isa = PBXBuildFile; fileRef = A500F90C24B56D5D00D0BEC2 /* swepcalc.c */; };
 		A500F90F24B56D5D00D0BEC2 /* swepcalc.h in Headers */ = {isa = PBXBuildFile; fileRef = A500F90D24B56D5D00D0BEC2 /* swepcalc.h */; };
 		A500F91124B56E2D00D0BEC2 /* IndicEphemeris.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500F91024B56E2D00D0BEC2 /* IndicEphemeris.swift */; };
+		A5A4141C24C222E400176C33 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5A4141B24C222E400176C33 /* Config.swift */; };
 		A5BAF72B24B9135600AB8415 /* IndicEphemerisTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5BAF72A24B9135600AB8415 /* IndicEphemerisTest.swift */; };
 		A5BAF73224B9136900AB8415 /* IndicEphemeris.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A500F8CD24B5695400D0BEC2 /* IndicEphemeris.framework */; };
 		A5BAF73424B94E3E00AB8415 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5BAF73324B94E3D00AB8415 /* Logger.swift */; };
@@ -76,6 +77,7 @@
 		A500F90D24B56D5D00D0BEC2 /* swepcalc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = swepcalc.h; sourceTree = "<group>"; };
 		A500F91024B56E2D00D0BEC2 /* IndicEphemeris.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicEphemeris.swift; sourceTree = "<group>"; };
 		A500F91224B56F5700D0BEC2 /* Swiss.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; path = Swiss.modulemap; sourceTree = "<group>"; };
+		A5A4141B24C222E400176C33 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		A5BAF72824B9135600AB8415 /* IndicEphemerisTest.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IndicEphemerisTest.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A5BAF72A24B9135600AB8415 /* IndicEphemerisTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicEphemerisTest.swift; sourceTree = "<group>"; };
 		A5BAF72C24B9135600AB8415 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -131,8 +133,9 @@
 			children = (
 				A500F91224B56F5700D0BEC2 /* Swiss.modulemap */,
 				A500F8D124B5695400D0BEC2 /* Info.plist */,
-				A5BAF73724B989B200AB8415 /* Definitions.swift */,
 				A5BAF73324B94E3D00AB8415 /* Logger.swift */,
+				A5A4141B24C222E400176C33 /* Config.swift */,
+				A5BAF73724B989B200AB8415 /* Definitions.swift */,
 				A500F91024B56E2D00D0BEC2 /* IndicEphemeris.swift */,
 				A5C534A624BCD520000B225F /* DashaExtension.swift */,
 				A5C534A824BCD6D8000B225F /* TransitExtension.swift */,
@@ -316,6 +319,7 @@
 				A500F8FB24B56A0700D0BEC2 /* swejpl.c in Sources */,
 				A500F8F324B56A0700D0BEC2 /* swepdate.c in Sources */,
 				A500F8F724B56A0700D0BEC2 /* swemplan.c in Sources */,
+				A5A4141C24C222E400176C33 /* Config.swift in Sources */,
 				A5BAF73424B94E3E00AB8415 /* Logger.swift in Sources */,
 				A500F8FD24B56A0700D0BEC2 /* swedate.c in Sources */,
 				A5C534A724BCD520000B225F /* DashaExtension.swift in Sources */,
@@ -482,6 +486,8 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 				INFOPLIST_FILE = SwiftWrapper/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -512,6 +518,8 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 				INFOPLIST_FILE = SwiftWrapper/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (

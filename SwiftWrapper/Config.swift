@@ -23,7 +23,15 @@ open class Config {
      */
     open var logLevel: Logger.Level { .warning }
     
+    /**
+     - Important: This is a global setting. Passing a different value to one instance will affect all instances of `IndicEphemeric`.
+     */
     open var ayanamsha: Ayanamsha { .Lahiri }
+    
+    /**
+     - Important: This is a global setting. Passing a different value to one instance will affect all instances of `IndicEphemeric`.
+     */
+    open var dataPath: String { Bundle(for: IndicEphemeris.self).bundleURL.appendingPathComponent("Resources", isDirectory: true).appendingPathComponent("EphemerisData", isDirectory: true).path }
     
     /**
      The depth in `DashaType` up to which sub-Dashas are desired.

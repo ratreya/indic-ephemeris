@@ -17,7 +17,6 @@ public class IndicEphemeris {
     internal let dateUTC: Date
     internal let place: Place
     internal let log: Logger
-    private static var refcount = 0
     
     /**
      - Parameters:
@@ -29,26 +28,10 @@ public class IndicEphemeris {
         self.log = Logger(level: config.logLevel)
         self.place = at
         self.dateUTC = Calendar.current.date(byAdding: .second, value: -at.timezone.secondsFromGMT(for: date), to: date)!
-        // Initialize Swiss Ephemeris once
-        objc_sync_enter(self)
-        if IndicEphemeris.refcount == 0 {
-            let path = (Bundle(for: IndicEphemeris.self).bundleURL.appendingPathComponent("Resources", isDirectory: true).appendingPathComponent("EphemerisData", isDirectory: true).path as NSString).utf8String
-            swe_set_ephe_path(UnsafeMutablePointer<Int8>(mutating: path))
-            swe_set_topo(at.longitude, at.latitude, at.altitude)
-            swe_set_sid_mode(Int32(config.ayanamsha.rawValue), 0, 0)
-        }
-        IndicEphemeris.refcount += 1
-        objc_sync_exit(self)
-    }
-    
-    deinit {
-        // Close Swiss Ephemeris when the final instance gets released
-        objc_sync_enter(self)
-        IndicEphemeris.refcount -= 1
-        if IndicEphemeris.refcount == 0 {
-            swe_close()
-        }
-        objc_sync_exit(self)
+        let path = (config.dataPath as NSString).utf8String
+        swe_set_ephe_path(UnsafeMutablePointer<Int8>(mutating: path))
+        swe_set_topo(at.longitude, at.latitude, at.altitude)
+        swe_set_sid_mode(Int32(config.ayanamsha.rawValue), 0, 0)
     }
     
     internal func julianDay(for date: Date? = nil) throws -> Double {
@@ -152,7 +135,9 @@ public class IndicEphemeris {
             cusps.deallocate()
             ascmc.deallocate()
         }
-        swe_houses_ex(try julianDay(), SEFLG_SIDEREAL, place.latitude, place.longitude, Int32(Character("W").asciiValue!), cusps, ascmc)
+        if swe_houses_ex(try julianDay(), SEFLG_SIDEREAL, place.latitude, place.longitude, Int32(Character("W").asciiValue!), cusps, ascmc) < 0 {
+            throw EphemerisError.runtimeError("swe_houses_ex returned error for unknown reasons")
+        }
         return Position(logitude: ascmc[0])
     }
 }

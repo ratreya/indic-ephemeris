@@ -67,15 +67,15 @@ class IndicEphemerisTest: XCTestCase {
             let birth = Date(timeIntervalSinceNow: Double.random(in: 311040000...3110400000))
             let eph = IndicEphemeris(date: birth, at: Place(placeId: "Mysore", timezone: TimeZone(abbreviation: "IST")!, latitude: 12.3051828, longitude: 76.6553609, altitude: 746))
             let moon = try eph.position(for: .Moon).houseLocation().house
-            _ = try eph.transit(of: Planet.allCases[Int.random(in: 0..<9)], through: HouseRange(adjoining: moon), during: DateInterval(start: Date(), duration: Double.random(in: 31104000...311040000)))
+            _ = try TransitFinder(eph).transit(of: Planet.allCases[Int.random(in: 0..<9)], through: HouseRange(adjoining: moon), limit: .duration(DateInterval(start: Date(), duration: Double.random(in: 31104000...311040000))))
         }
     }
     
     func testDashas() throws {
         let range = DateInterval(start: Date(), duration: 30*24*60*60)
         print(range)
-        print(try ephemeris!.dashas(overlapping: range).map( { $0.description } ).joined(separator: "\n"))
+        print(try DashaCalculator(ephemeris!).dashas(overlapping: range).map( { $0.description } ).joined(separator: "\n"))
         print(try ephemeris!.position(for: .Moon).nakshatraLocation())
-        print(try ephemeris!.dashas().map( { $0.description } ).joined(separator: "\n"))
+        print(try DashaCalculator(ephemeris!).dashas().map( { $0.description } ).joined(separator: "\n"))
     }
 }

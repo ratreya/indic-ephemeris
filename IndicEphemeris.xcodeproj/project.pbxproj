@@ -36,8 +36,8 @@
 		A5BAF73424B94E3E00AB8415 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5BAF73324B94E3D00AB8415 /* Logger.swift */; };
 		A5BAF73624B951F300AB8415 /* EphemerisData in Resources */ = {isa = PBXBuildFile; fileRef = A5BAF73524B951F300AB8415 /* EphemerisData */; };
 		A5BAF73824B989B200AB8415 /* Definitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5BAF73724B989B200AB8415 /* Definitions.swift */; };
-		A5C534A724BCD520000B225F /* DashaExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5C534A624BCD520000B225F /* DashaExtension.swift */; };
-		A5C534A924BCD6D8000B225F /* TransitExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5C534A824BCD6D8000B225F /* TransitExtension.swift */; };
+		A5C534A724BCD520000B225F /* DashaCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5C534A624BCD520000B225F /* DashaCalculator.swift */; };
+		A5C534A924BCD6D8000B225F /* TransitFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5C534A824BCD6D8000B225F /* TransitFinder.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -84,8 +84,8 @@
 		A5BAF73324B94E3D00AB8415 /* Logger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		A5BAF73524B951F300AB8415 /* EphemerisData */ = {isa = PBXFileReference; lastKnownFileType = folder; path = EphemerisData; sourceTree = "<group>"; };
 		A5BAF73724B989B200AB8415 /* Definitions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Definitions.swift; sourceTree = "<group>"; };
-		A5C534A624BCD520000B225F /* DashaExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashaExtension.swift; sourceTree = "<group>"; };
-		A5C534A824BCD6D8000B225F /* TransitExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitExtension.swift; sourceTree = "<group>"; };
+		A5C534A624BCD520000B225F /* DashaCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashaCalculator.swift; sourceTree = "<group>"; };
+		A5C534A824BCD6D8000B225F /* TransitFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitFinder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -137,8 +137,8 @@
 				A5A4141B24C222E400176C33 /* Config.swift */,
 				A5BAF73724B989B200AB8415 /* Definitions.swift */,
 				A500F91024B56E2D00D0BEC2 /* IndicEphemeris.swift */,
-				A5C534A624BCD520000B225F /* DashaExtension.swift */,
-				A5C534A824BCD6D8000B225F /* TransitExtension.swift */,
+				A5C534A624BCD520000B225F /* DashaCalculator.swift */,
+				A5C534A824BCD6D8000B225F /* TransitFinder.swift */,
 			);
 			path = SwiftWrapper;
 			sourceTree = "<group>";
@@ -322,8 +322,8 @@
 				A5A4141C24C222E400176C33 /* Config.swift in Sources */,
 				A5BAF73424B94E3E00AB8415 /* Logger.swift in Sources */,
 				A500F8FD24B56A0700D0BEC2 /* swedate.c in Sources */,
-				A5C534A724BCD520000B225F /* DashaExtension.swift in Sources */,
-				A5C534A924BCD6D8000B225F /* TransitExtension.swift in Sources */,
+				A5C534A724BCD520000B225F /* DashaCalculator.swift in Sources */,
+				A5C534A924BCD6D8000B225F /* TransitFinder.swift in Sources */,
 				A5BAF73824B989B200AB8415 /* Definitions.swift in Sources */,
 				A500F91124B56E2D00D0BEC2 /* IndicEphemeris.swift in Sources */,
 			);

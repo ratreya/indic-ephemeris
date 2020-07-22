@@ -39,4 +39,6 @@ open class Config {
     open var maxDashaDepth: DashaType { .Pratyantardasha }
     
     open var transitResolution: Calendar.Component { .second }
+    
+    open var transitConcurrency: Int { 10 }
 }

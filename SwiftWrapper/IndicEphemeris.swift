@@ -10,13 +10,13 @@
 import Foundation
 
 /**
- - Important: This class in **not** thread-safe because Swiss Ephemeris is not thread-safe despite assurances to the contrary.
+ - Important: Since Swiss Ephemeris uses Thread Local Storage, you will see unexpected behavior if you pass an instance of this class between threads. For the same reason, this class does not call `swe_close()` in `deinit`. The consumers of this class should call `swe_close()` at the end of their thread lifecycle. Furthermore, the `Config` passed into a new instances of this class on a given thread will affect all previous instances created on the same thread. *Hence, it is advisible to only have one instance of this class per thread at any given time.*
  */
 public class IndicEphemeris {
-    internal let config: Config
-    internal let dateUTC: Date
-    internal let place: Place
-    internal let log: Logger
+    let config: Config
+    let dateUTC: Date
+    let place: Place
+    let log: Logger
     
     /**
      - Parameters:
@@ -52,7 +52,7 @@ public class IndicEphemeris {
         return times[1]
     }
     
-    internal func dates(during range: DateInterval, every delta: Int, unit: Calendar.Component) throws -> [Date] {
+    func dates(during range: DateInterval, every delta: Int, unit: Calendar.Component) throws -> [Date] {
         var dates = [Date]()
         var date = range.start
         while date < range.end {

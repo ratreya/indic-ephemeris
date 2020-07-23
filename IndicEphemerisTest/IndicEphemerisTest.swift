@@ -78,4 +78,18 @@ class IndicEphemerisTest: XCTestCase {
         print(try ephemeris!.position(for: .Moon).nakshatraLocation())
         print(try DashaCalculator(ephemeris!).dashas().map( { $0.description } ).joined(separator: "\n"))
     }
+    
+    func XXXtestGetAvgSpeeds() throws {
+        for planet in Planet.allCases {
+            let speeds = try ephemeris!.mapReduce(during: DateInterval(start: Date(timeIntervalSinceNow: -lifetimeInSeconds/2), duration: lifetimeInSeconds/2), map: { (ephemeris: IndicEphemeris, range: DateInterval) -> [Double] in
+                let positions = try ephemeris.positions(for: planet, during: range, every: 1, unit: .hour)
+                return positions.map { $0.1.speed! }
+            }, reduce: {(shard: [Double], previous: inout [Double]?) in
+                if previous == nil { previous = [] }
+                previous!.append(contentsOf: shard)
+            })
+            let average = (speeds as NSArray).value(forKeyPath: "@avg.floatValue") as! Double
+            print("Planet: \(planet), Average \(String(format: "%.6f", average)), Max: \(String(format: "%.6f", speeds.max()!))")
+        }
+    }
 }

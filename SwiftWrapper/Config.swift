@@ -40,5 +40,5 @@ open class Config {
     
     open var transitResolution: Calendar.Component { .second }
     
-    open var transitConcurrency: Int { 10 }
+    open var concurrency: Int { 10 }
 }

@@ -30,26 +30,40 @@ public enum Planet: Int, CaseIterable {
         SouthNode=108 // Some number that is invalid for SWE; we will special case it
 }
 
-/**
- For all position to time calculations, we are sampling position at 30 degrees (1 house) of spatial granularity.
- So, temporal sampling should be at such an interval within which the planet will move less than 30 degrees.
-*/
 extension Planet {
-    private static let properties: [Planet: (dashaRatio: Double, symbol:  Character, sampling: Calendar.Component)] = [
-        .Sun: (6/120, "\u{2609}", .day),
-        .Moon: (10/120, "\u{263D}", .day),
-        .Mercury: (17/120, "\u{263F}", .day),
-        .Venus: (20/120, "\u{2640}", .day),
-        .Mars: (7/120, "\u{2642}", .month),
-        .Jupiter: (16/120, "\u{2643}", .month),
-        .Saturn: (19/120, "\u{2644}", .month),
-        .NorthNode: (18/120, "\u{260A}", .year),
-        .SouthNode: (7/120, "\u{260B}", .year)
+    private static let properties: [Planet: (dashaRatio: Double, symbol:  Character, avgSpeed: Double, maxSpeed: Double)] = [
+        .Sun: (6/120, "\u{2609}", 0.985628, 1.033942),
+        .Moon: (10/120, "\u{263D}", 13.176157, 20.981417),
+        .Mercury: (17/120, "\u{263F}", 0.985586, 2.212896),
+        .Venus: (20/120, "\u{2640}", 0.983066, 1.266983),
+        .Mars: (7/120, "\u{2642}", 0.523740, 0.797004),
+        .Jupiter: (16/120, "\u{2643}", 0.083393, 0.244502),
+        .Saturn: (19/120, "\u{2644}", 0.033544, 0.134413),
+        .NorthNode: (18/120, "\u{260A}", -0.052867, 0.255987),
+        .SouthNode: (7/120, "\u{260B}", -0.052867, 0.255987)
     ]
     
+    /**
+     Dasha period in years of the given planet divided by 120 years.
+     */
     public var dashaRatio: Double { Planet.properties[self]!.dashaRatio }
+    
+    /**
+     Unicode symbol for the given planet.
+     */
     public var symbol: Character { Planet.properties[self]!.symbol }
-    public var sampling: Calendar.Component { Planet.properties[self]!.sampling }
+    
+    /**
+     Average speed in degrees / day for the given planet.
+     - Note: Calculated using hourly samples over 120 years, 60 before 2020 and 60 after, for each planet.
+     */
+    public var avgSpeed: Double { Planet.properties[self]!.avgSpeed }
+    
+    /**
+     Maximum speed in degrees / day for the given planet.
+     - Note: Calculated using hourly samples over 120 years, 60 before 2020 and 60 after, for each planet.
+     */
+    public var maxSpeed: Double { Planet.properties[self]!.maxSpeed }
 }
 
 public enum Nakshatra: Int, CaseIterable {

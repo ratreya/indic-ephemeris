@@ -13,6 +13,7 @@ import Foundation
  - Important: Since Swiss Ephemeris uses Thread Local Storage, you will see unexpected behavior if you pass an instance of this class between threads. For the same reason, this class does not call `swe_close()` in `deinit`. The consumers of this class should call `swe_close()` at the end of their thread lifecycle. Furthermore, the `Config` passed into a new instances of this class on a given thread will affect all previous instances created on the same thread. *Hence, it is advisible to only have one instance of this class per thread at any given time.*
  */
 public class IndicEphemeris {
+    private let queue: DispatchQueue
     let config: Config
     let dateUTC: Date
     let place: Place
@@ -28,6 +29,7 @@ public class IndicEphemeris {
         self.log = Logger(level: config.logLevel)
         self.place = at
         self.dateUTC = Calendar.current.date(byAdding: .second, value: -at.timezone.secondsFromGMT(for: date), to: date)!
+        self.queue = DispatchQueue(label: "com.daivajnanam.IndicEphemeris", qos: .userInitiated, attributes: .concurrent, autoreleaseFrequency: .workItem)
         let path = (config.dataPath as NSString).utf8String
         swe_set_ephe_path(UnsafeMutablePointer<Int8>(mutating: path))
         swe_set_topo(at.longitude, at.latitude, at.altitude)
@@ -82,7 +84,7 @@ public class IndicEphemeris {
                 log.warning(message)
             }
             if planet == .SouthNode {
-                result.append((date, Position(logitude: (positions[0] + 180).truncatingRemainder(dividingBy: 360), latitude: -positions[1], distance: positions[2], speed: -positions[3])))
+                result.append((date, Position(logitude: (positions[0] + 180).truncatingRemainder(dividingBy: 360), latitude: -positions[1], distance: positions[2], speed: positions[3])))
             }
             else {
                 result.append((date, Position(logitude: positions[0], latitude: positions[1], distance: positions[2], speed: positions[3])))
@@ -139,5 +141,59 @@ public class IndicEphemeris {
             throw EphemerisError.runtimeError("swe_houses_ex returned error for unknown reasons")
         }
         return Position(logitude: ascmc[0])
+    }
+
+    private enum AsycResult<T> {
+        case result([T])
+        case error(Error)
+    }
+
+    /**
+     If you need to do run many ephemeris calculations over a large period of time, this function provides the boilerplate code for running them in parallel.
+     Function takes a date `range`, shards the date range into `Config.concurrency` number of shards, executes the `map` function on these shards in parallel and serially calls `reduce` with results from `map` in chronological order.
+     - Parameters:
+        - during: `DateInterval` to shard and over which to run `map`.
+        - map: Closure that takes an instance of `IndicEphemeris` and a shard of `DateInterval`, performs some operation and returns an array of results.
+        - reduce: Closure that takes one result at a time from `map` in chronological order along with the result from the previous run of `reduce` and returns new results. The first call to `reduce` will send in `nil` as previous result.
+     - Returns: The final result from the last call to `reduce`
+     - Throws: Any exception that may be thrown from any run of `map`.
+     */
+    public func mapReduce<T, W>(during range: DateInterval, map: @escaping (IndicEphemeris, DateInterval) throws -> [T], reduce: ([T], inout W?) -> Void) throws -> W {
+        // Map
+        let shardDuration = range.duration / Double(config.concurrency)
+        let shards = Array(0..<config.concurrency).map { shard in  DateInterval(start: range.start.advanced(by: shardDuration * Double(shard)), duration: shardDuration) }
+        let mutex = DispatchSemaphore(value: 1)
+        var shardResults = [Int: AsycResult<T>]()
+        let group = DispatchGroup()
+        for index in 0..<config.concurrency {
+            group.enter()
+            queue.async(group: group) {
+                let eph = IndicEphemeris(date: self.dateUTC, at: self.place, config: self.config)
+                var shardResult: AsycResult<T>
+                do {
+                    shardResult = .result(try map(eph, shards[index]))
+                }
+                catch let exp {
+                    shardResult = .error(exp)
+                }
+                mutex.wait()
+                shardResults[index] = shardResult
+                mutex.signal()
+                group.leave()
+            }
+        }
+        group.wait()
+        // Reduce
+        var result: W?
+        for index in shardResults.keys.sorted() {
+            let shardResult = shardResults[index]!
+            switch shardResult {
+            case .error(let exp):
+                throw exp
+            case .result(let shardResult):
+                reduce(shardResult, &result)
+            }
+        }
+        return result!
     }
 }

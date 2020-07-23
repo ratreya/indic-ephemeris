@@ -30,6 +30,7 @@
 		A500F90E24B56D5D00D0BEC2 /* swepcalc.c in Sources */ = {isa = PBXBuildFile; fileRef = A500F90C24B56D5D00D0BEC2 /* swepcalc.c */; };
 		A500F90F24B56D5D00D0BEC2 /* swepcalc.h in Headers */ = {isa = PBXBuildFile; fileRef = A500F90D24B56D5D00D0BEC2 /* swepcalc.h */; };
 		A500F91124B56E2D00D0BEC2 /* IndicEphemeris.swift in Sources */ = {isa = PBXBuildFile; fileRef = A500F91024B56E2D00D0BEC2 /* IndicEphemeris.swift */; };
+		A575E82B24C9C8BD009A4CAC /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = A575E82A24C9C8BD009A4CAC /* LICENSE */; };
 		A5A4141C24C222E400176C33 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5A4141B24C222E400176C33 /* Config.swift */; };
 		A5BAF72B24B9135600AB8415 /* IndicEphemerisTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5BAF72A24B9135600AB8415 /* IndicEphemerisTest.swift */; };
 		A5BAF73224B9136900AB8415 /* IndicEphemeris.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A500F8CD24B5695400D0BEC2 /* IndicEphemeris.framework */; };
@@ -77,6 +78,7 @@
 		A500F90D24B56D5D00D0BEC2 /* swepcalc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = swepcalc.h; sourceTree = "<group>"; };
 		A500F91024B56E2D00D0BEC2 /* IndicEphemeris.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicEphemeris.swift; sourceTree = "<group>"; };
 		A500F91224B56F5700D0BEC2 /* Swiss.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; path = Swiss.modulemap; sourceTree = "<group>"; };
+		A575E82A24C9C8BD009A4CAC /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		A5A4141B24C222E400176C33 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		A5BAF72824B9135600AB8415 /* IndicEphemerisTest.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IndicEphemerisTest.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A5BAF72A24B9135600AB8415 /* IndicEphemerisTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicEphemerisTest.swift; sourceTree = "<group>"; };
@@ -146,6 +148,7 @@
 		A500F8D824B569DC00D0BEC2 /* SwissEphemeris */ = {
 			isa = PBXGroup;
 			children = (
+				A575E82A24C9C8BD009A4CAC /* LICENSE */,
 				A500F8EB24B56A0600D0BEC2 /* swecl.c */,
 				A500F8E524B56A0600D0BEC2 /* swedate.c */,
 				A500F8EE24B56A0600D0BEC2 /* swedate.h */,
@@ -290,6 +293,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A575E82B24C9C8BD009A4CAC /* LICENSE in Resources */,
 				A5BAF73624B951F300AB8415 /* EphemerisData in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

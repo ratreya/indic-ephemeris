@@ -13,7 +13,7 @@ public enum DashaType: Int, CaseIterable {
     case Mahadasha=0, Antardasha, Pratyantardasha
     
     static func < (left: DashaType, right: DashaType) -> Bool { left.rawValue < right.rawValue }
-    static func + (left: DashaType, right: Int) -> DashaType { DashaType(rawValue: max(left.rawValue + right, DashaType.Pratyantardasha.rawValue))! }
+    static func + (left: DashaType, right: Int) -> DashaType { DashaType(rawValue: min(left.rawValue + right, DashaType.Pratyantardasha.rawValue))! }
 }
 
 let dashaOrder: [Planet] = [.SouthNode, .Venus, .Sun, .Moon, .Mars, .NorthNode, .Jupiter, .Saturn, .Mercury]

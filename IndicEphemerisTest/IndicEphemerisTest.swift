@@ -45,6 +45,15 @@ class IndicEphemerisTest: XCTestCase {
         XCTAssert(!range.contains(.Taurus))
         XCTAssert(!range.contains(.Cancer))
         XCTAssert(!range.contains(.Scorpio))
+        
+        XCTAssert(!range.degrees.contains(House.Sagittarius.degrees.lowerBound))
+        XCTAssert(range.degrees.contains(House.Aquarius.degrees.lowerBound))
+        XCTAssert(range.degrees.contains(House.Pisces.degrees.lowerBound))
+        XCTAssert(range.degrees.contains(House.Aries.degrees.lowerBound))
+        XCTAssert(!range.degrees.contains(House.Taurus.degrees.lowerBound))
+        XCTAssert(!range.degrees.contains(House.Cancer.degrees.lowerBound))
+        XCTAssert(!range.degrees.contains(House.Scorpio.degrees.lowerBound))
+
         let anti = range.inverted()
         XCTAssert(anti.contains(.Sagittarius))
         XCTAssert(!anti.contains(.Aquarius))

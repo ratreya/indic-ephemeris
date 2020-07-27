@@ -46,7 +46,7 @@ public struct DegreeRange: CustomStringConvertible {
     
     public func contains(_ degree: Double) -> Bool {
         if lowerBound < upperBound { return (lowerBound <= degree) && (degree < upperBound) }
-        else { return (degree >= lowerBound) && (degree < upperBound) }
+        else { return (degree >= lowerBound) || (degree < upperBound) }
     }
     
     public func inverted() -> DegreeRange { DegreeRange(lowerBound: upperBound, size: 360 - size) }

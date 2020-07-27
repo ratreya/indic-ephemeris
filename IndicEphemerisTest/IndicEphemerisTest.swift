@@ -67,7 +67,7 @@ class IndicEphemerisTest: XCTestCase {
             let birth = Date(timeIntervalSinceNow: Double.random(in: 311040000...3110400000))
             let eph = IndicEphemeris(date: birth, at: Place(placeId: "Mysore", timezone: TimeZone(abbreviation: "IST")!, latitude: 12.3051828, longitude: 76.6553609, altitude: 746))
             let moon = try eph.position(for: .Moon).houseLocation().house
-            _ = try TransitFinder(eph).transit(of: Planet.allCases[Int.random(in: 0..<9)], through: HouseRange(adjoining: moon), limit: .duration(DateInterval(start: Date(), duration: Double.random(in: 31104000...311040000))))
+            _ = try TransitFinder(eph).transits(of: Planet.allCases[Int.random(in: 0..<9)], through: HouseRange(adjoining: moon), limit: .duration(DateInterval(start: Date(), duration: Double.random(in: 31104000...311040000))))
         }
     }
     
@@ -79,10 +79,40 @@ class IndicEphemerisTest: XCTestCase {
         print(try DashaCalculator(ephemeris!).dashas().map( { $0.description } ).joined(separator: "\n"))
     }
     
-    func XXXtestGetAvgSpeeds() throws {
-        for planet in Planet.allCases {
-            let speeds = try ephemeris!.mapReduce(during: DateInterval(start: Date(timeIntervalSinceNow: -lifetimeInSeconds/2), duration: lifetimeInSeconds/2), map: { (ephemeris: IndicEphemeris, range: DateInterval) -> [Double] in
-                let positions = try ephemeris.positions(for: planet, during: range, every: 1, unit: .hour)
+    func testGranularity() throws {
+        for unit in granularityOrder {
+            XCTAssertEqual(unit.seconds.granularity.value, 1)
+            XCTAssertEqual(unit.seconds.granularity.unit, unit)
+            XCTAssertEqual((unit.seconds * 7).granularity.value, 7)
+            XCTAssertEqual((unit.seconds * 7).granularity.unit, unit)
+            XCTAssertEqual((unit.seconds * 100).granularity.unit, granularityOrder[max(granularityOrder.firstIndex(of: unit)!.advanced(by: -1), 0)])
+        }
+    }
+    
+    func testRetrograde() throws {
+        for planet in Planet.allCases[...7] {
+            let secsPerRev = planet.avgTime(for: 20)
+            let retros = try TransitFinder(ephemeris!).retrogrades(of: planet, during: DateInterval(start: Date(), duration: secsPerRev))
+            for retro in retros {
+                let timePositions = try ephemeris!.positions(for: planet, during: retro, every: 60*60)
+                let predicate: ((Date, Position)) -> Bool = planet == .NorthNode ? { $0.1.speed! > 0 } : { $0.1.speed! < 0 }
+                XCTAssert(timePositions.allSatisfy(predicate), "Failed \(planet) for \(retro)")
+            }
+        }
+    }
+    
+    func testNonProlepticDate() throws {
+        let date = ISO8601DateFormatter().date(from: "1300-02-29T10:10:00+0000")!
+        _ = try ephemeris?.julianDay(for: date)
+    }
+
+    func XXXtestGetSpeeds() throws {
+        for planet in Planet.allCases[...7] {
+            let secsPerRev = planet.avgTime(for: 360 * 50)
+            let sampling = planet.minTime(for: 1)
+            let interval = DateInterval(start: Date(timeIntervalSinceReferenceDate: 0).advanced(by: -secsPerRev), duration: secsPerRev)
+            let speeds = try ephemeris!.mapReduce(during: interval, map: { (ephemeris: IndicEphemeris, range: DateInterval) -> [Double] in
+                let positions = try ephemeris.positions(for: planet, during: range, every: sampling)
                 return positions.map { $0.1.speed! }
             }, reduce: {(shard: [Double], previous: inout [Double]?) in
                 if previous == nil { previous = [] }
@@ -90,6 +120,19 @@ class IndicEphemerisTest: XCTestCase {
             })
             let average = (speeds as NSArray).value(forKeyPath: "@avg.floatValue") as! Double
             print("Planet: \(planet), Average \(String(format: "%.6f", average)), Max: \(String(format: "%.6f", speeds.max()!))")
+        }
+    }
+    
+    func XXXtestGetRetrograde() throws {
+        for planet in Planet.allCases[...7] {
+            let secsPerRev = planet.avgTime(for: 360 * 10)
+            let interval = DateInterval(start: Date(timeIntervalSinceReferenceDate: 0).advanced(by: -secsPerRev), duration: secsPerRev * 2)
+            let timePositions = try TransitFinder(ephemeris!).retrogrades(of: planet, during: interval)
+            let max = timePositions.map { $0.duration }.max()
+            let midpoints = timePositions.map { $0.start.advanced(by: $0.duration/2) }
+            let diffs = stride(from: 0, to: midpoints.count - 1, by: 1).map { (midpoints[$0 + 1].timeIntervalSince1970 - midpoints[$0].timeIntervalSince1970) }
+            print("\(planet): \(max ?? 0) (\((max ?? 0).degreeMinuteSecond), \(diffs.max() ?? 0) (\((diffs.max() ?? 0).degreeMinuteSecond)")
+            
         }
     }
 }

@@ -37,14 +37,22 @@ public class IndicEphemeris {
     }
     
     internal func julianDay(for date: Date? = nil) throws -> Double {
-        let components = Calendar.current.dateComponents(in: TimeZone.init(secondsFromGMT: 0)!, from: date ?? dateUTC)
+        // Swiss Ephemeris uses proliptic Gregorian calendar while Swift on OS X does not.
+        var calendarType = SE_GREG_CAL
+        let target = date ?? dateUTC
+        #if os(macOS)
+        if target < Date(timeIntervalSince1970: -12219292800.0) { // 1582-10-15T00:00:00+0000
+            calendarType = SE_JUL_CAL
+        }
+        #endif
+        let components = Calendar.current.dateComponents(in: TimeZone.init(secondsFromGMT: 0)!, from: target)
         let times: UnsafeMutablePointer<Double> = UnsafeMutablePointer.allocate(capacity: 2)
         let error = UnsafeMutablePointer<Int8>.allocate(capacity: 256)
         defer {
             times.deallocate()
             error.deallocate()
         }
-        if swe_utc_to_jd(Int32(components.year!), Int32(components.month!), Int32(components.day!), Int32(components.hour!), Int32(components.minute!), Double(components.second!), SE_GREG_CAL, times, error) < 0 {
+        if swe_utc_to_jd(Int32(components.year!), Int32(components.month!), Int32(components.day!), Int32(components.hour!), Int32(components.minute!), Double(components.second!), calendarType, times, error) < 0 {
             throw EphemerisError.runtimeError(String(cString: error))
         }
         let message = String(cString: error)
@@ -96,7 +104,12 @@ public class IndicEphemeris {
     public func position(for planet: Planet) throws -> Position {
         return try positions(for: planet, at: [dateUTC]).first!.1
     }
-    
+
+    public func positions(for planet: Planet, during range: DateInterval, every time: TimeInterval) throws -> [(Date, Position)] {
+        let dates = stride(from: range.start.timeIntervalSince1970, to: range.end.timeIntervalSince1970, by: time).map({ Date(timeIntervalSince1970: $0) })
+        return try positions(for: planet, at: dates)
+    }
+
     public func positions(for planet: Planet, during range: DateInterval, every delta: Int, unit: Calendar.Component) throws -> [(Date, Position)] {
         return try positions(for: planet, at: dates(during: range, every: delta, unit: unit))
     }
@@ -130,7 +143,7 @@ public class IndicEphemeris {
         return try phases(for: planet, at: dates(during: range, every: delta, unit: unit))
     }
     
-    public func ascendant() throws -> Position {
+    func houses() throws -> (cusps: [Double], ascmc: [Double]) {
         let cusps: UnsafeMutablePointer<Double> = UnsafeMutablePointer.allocate(capacity: 13)
         let ascmc: UnsafeMutablePointer<Double> = UnsafeMutablePointer.allocate(capacity: 10)
         defer {
@@ -140,7 +153,11 @@ public class IndicEphemeris {
         if swe_houses_ex(try julianDay(), SEFLG_SIDEREAL, place.latitude, place.longitude, Int32(Character("W").asciiValue!), cusps, ascmc) < 0 {
             throw EphemerisError.runtimeError("swe_houses_ex returned error for unknown reasons")
         }
-        return Position(logitude: ascmc[0])
+        return (Array(UnsafeBufferPointer(start: cusps, count: 13)), Array(UnsafeBufferPointer(start: ascmc, count: 10)))
+    }
+    
+    public func ascendant() throws -> Position {
+        return Position(logitude: try houses().ascmc[0])
     }
 
     private enum AsycResult<T> {

@@ -23,24 +23,31 @@ public enum House: Int, CaseIterable {
     static func - (left: House, right: Int) -> House {
         return left + (12 - (right % 12))
     }
+    
+    public var degrees: DegreeRange {
+        return DegreeRange(lowerBound: Double(rawValue * 30), size: 30)
+    }
 }
 
 public enum Planet: Int, CaseIterable {
     case Sun = 0, Moon, Mercury, Venus, Mars, Jupiter, Saturn, NorthNode=11,
         SouthNode=108 // Some number that is invalid for SWE; we will special case it
-}
+    
+    static func > (left: Planet, right: Planet) -> Bool { left.rawValue > right.rawValue }
+    static func >= (left: Planet, right: Planet) -> Bool { left.rawValue >= right.rawValue }
+    static func < (left: Planet, right: Planet) -> Bool { left.rawValue < right.rawValue }
+    static func <= (left: Planet, right: Planet) -> Bool { left.rawValue <= right.rawValue }
 
-extension Planet {
-    private static let properties: [Planet: (dashaRatio: Double, symbol:  Character, avgSpeed: Double, maxSpeed: Double)] = [
-        .Sun: (6/120, "\u{2609}", 0.985628, 1.033942),
-        .Moon: (10/120, "\u{263D}", 13.176157, 20.981417),
-        .Mercury: (17/120, "\u{263F}", 0.985586, 2.212896),
-        .Venus: (20/120, "\u{2640}", 0.983066, 1.266983),
-        .Mars: (7/120, "\u{2642}", 0.523740, 0.797004),
-        .Jupiter: (16/120, "\u{2643}", 0.083393, 0.244502),
-        .Saturn: (19/120, "\u{2644}", 0.033544, 0.134413),
-        .NorthNode: (18/120, "\u{260A}", -0.052867, 0.255987),
-        .SouthNode: (7/120, "\u{260B}", -0.052867, 0.255987)
+    private static let properties: [Planet: (dashaRatio: Double, symbol:  Character, avgSpeed: Double, maxSpeed: Double, retrograde: Double)] = [
+        .Sun: (6/120, "\u{2609}", 0.985628, 1.033942, 0),
+        .Moon: (10/120, "\u{263D}", 13.176157, 20.981417, 0),
+        .Mercury: (17/120, "\u{263F}", 0.985586, 2.212896, 2102550),
+        .Venus: (20/120, "\u{2640}", 0.983066, 1.266983, 3740235),
+        .Mars: (7/120, "\u{2642}", 0.523740, 0.797004, 6865268),
+        .Jupiter: (16/120, "\u{2643}", 0.083393, 0.244502, 10644662),
+        .Saturn: (19/120, "\u{2644}", 0.033544, 0.134413, 12176645),
+        .NorthNode: (18/120, "\u{260A}", -0.053040, 0.032170, 345600),
+        .SouthNode: (7/120, "\u{260B}", -0.053040, 0.032170, 345600)
     ]
     
     /**
@@ -54,16 +61,22 @@ extension Planet {
     public var symbol: Character { Planet.properties[self]!.symbol }
     
     /**
-     Average speed in degrees / day for the given planet.
-     - Note: Calculated using hourly samples over 120 years, 60 before 2020 and 60 after, for each planet.
+     *Approximate* average speed in degrees / day for the given planet.
+     - Note: Calculated using one degree samples over 50 revolutions, 25 before 2020 and 25 after, for each planet. See `IndicEphemerisTest.testGetSpeeds()`.
      */
     public var avgSpeed: Double { Planet.properties[self]!.avgSpeed }
     
     /**
-     Maximum speed in degrees / day for the given planet.
-     - Note: Calculated using hourly samples over 120 years, 60 before 2020 and 60 after, for each planet.
+     *Approximate* maximum speed in degrees / day for the given planet.
+     - Note: Calculated using one degree samples over 50 revolutions, 25 before 2020 and 25 after, for each planet. See `IndicEphemerisTest.testGetSpeeds()`.
      */
     public var maxSpeed: Double { Planet.properties[self]!.maxSpeed }
+    
+    /**
+     *Approximate* maximum numbers of seconds that the given planet spends in retrograde motion.
+     - Note: Calculated over 50 revolutions, 25 before 2020 and 25 after, for each planet. See `IndicEphemerisTest.testGetRetrograde()`.
+     */
+    public var retrograde: Double { Planet.properties[self]!.retrograde }
 }
 
 public enum Nakshatra: Int, CaseIterable {

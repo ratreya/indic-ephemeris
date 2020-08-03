@@ -83,9 +83,9 @@ class IndicEphemerisTest: XCTestCase {
     func testDashas() throws {
         let range = DateInterval(start: Date(), duration: 30*24*60*60)
         print(range)
-        print(try DashaCalculator(ephemeris!).dashas(overlapping: range).map( { $0.description } ).joined(separator: "\n"))
+        print(try DashaCalculator(ephemeris!).vimshottari(overlapping: range).map( { $0.description } ).joined(separator: "\n"))
         print(try ephemeris!.position(for: .Moon).nakshatraLocation())
-        print(try DashaCalculator(ephemeris!).dashas().map( { $0.description } ).joined(separator: "\n"))
+        print(try DashaCalculator(ephemeris!).vimshottari().map( { $0.description } ).joined(separator: "\n"))
     }
     
     func testGranularity() throws {
@@ -98,14 +98,21 @@ class IndicEphemerisTest: XCTestCase {
         }
     }
     
+    class TestConfig: Config {
+        let definition: RetrogradeDefinition
+        init(_ definition: RetrogradeDefinition) { self.definition = definition }
+        override var retrogradeDefinition: RetrogradeDefinition { definition }
+    }
+
     func testRetrograde() throws {
-        for planet in Planet.allCases[...7] {
-            let secsPerRev = planet.avgTime(for: 20)
-            let retros = try TransitFinder(ephemeris!).retrogrades(of: planet, during: DateInterval(start: Date(), duration: secsPerRev))
+        for planet in Planet.allCases[2..<7] {
+            let eph = IndicEphemeris(date: ephemeris!.dateUTC, at: ephemeris!.place, config: TestConfig(.strict))
+            let retros = try TransitFinder(eph).retrogrades(of: planet, overlapping: DateInterval(start: Date(), duration: planet.synodicPeriod * 2))
+            XCTAssertFalse(retros.isEmpty)
             for retro in retros {
-                let timePositions = try ephemeris!.positions(for: planet, during: retro, every: 60*60)
+                let timePositions = try eph.positions(for: planet, during: retro, every: 60*60)
                 let predicate: ((Date, Position)) -> Bool = planet == .NorthNode ? { $0.1.speed! > 0 } : { $0.1.speed! < 0 }
-                XCTAssert(timePositions.allSatisfy(predicate), "Failed \(planet) for \(retro)")
+                XCTAssert(timePositions.allSatisfy(predicate), "Failed \(planet) for \(retro).\n\(timePositions.map { "\($0.0): \($0.1.speed!)" }.joined(separator: "\n"))")
             }
         }
     }
@@ -132,16 +139,12 @@ class IndicEphemerisTest: XCTestCase {
         }
     }
     
-    func XXXtestGetRetrograde() throws {
-        for planet in Planet.allCases[...7] {
-            let secsPerRev = planet.avgTime(for: 360 * 10)
-            let interval = DateInterval(start: Date(timeIntervalSinceReferenceDate: 0).advanced(by: -secsPerRev), duration: secsPerRev * 2)
-            let timePositions = try TransitFinder(ephemeris!).retrogrades(of: planet, during: interval)
-            let max = timePositions.map { $0.duration }.max()
-            let midpoints = timePositions.map { $0.start.advanced(by: $0.duration/2) }
-            let diffs = stride(from: 0, to: midpoints.count - 1, by: 1).map { (midpoints[$0 + 1].timeIntervalSince1970 - midpoints[$0].timeIntervalSince1970) }
-            print("\(planet): \(max ?? 0) (\((max ?? 0).degreeMinuteSecond), \(diffs.max() ?? 0) (\((diffs.max() ?? 0).degreeMinuteSecond)")
-            
-        }
+    func testPerson() throws {
+        let date = ISO8601DateFormatter().date(from: "1972-06-04T01:20:00+0000")!
+        let place = Place(placeId: "Bengaluru", timezone: TimeZone(abbreviation: "IST")!, latitude: 12.97082225, longitude: 77.58582276, altitude: 918)
+        let eph = IndicEphemeris(date: date, at: place)
+        let moon = try eph.position(for: .Moon)
+        print(try TransitFinder(eph).transits(of: .Saturn, through: HouseRange(adjoining: moon.houseLocation().house), limit: .count(from: Date().advanced(by: -Calendar.Component.year.seconds), count: 1)))
+        print(try DashaCalculator(eph).vimshottari())
     }
 }

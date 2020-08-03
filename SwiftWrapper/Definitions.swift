@@ -23,10 +23,6 @@ public enum House: Int, CaseIterable {
     static func - (left: House, right: Int) -> House {
         return left + (12 - (right % 12))
     }
-    
-    public var degrees: DegreeRange {
-        return DegreeRange(lowerBound: Double(rawValue * 30), size: 30)
-    }
 }
 
 public enum Planet: Int, CaseIterable {
@@ -38,16 +34,16 @@ public enum Planet: Int, CaseIterable {
     static func < (left: Planet, right: Planet) -> Bool { left.rawValue < right.rawValue }
     static func <= (left: Planet, right: Planet) -> Bool { left.rawValue <= right.rawValue }
 
-    private static let properties: [Planet: (dashaRatio: Double, symbol:  Character, avgSpeed: Double, maxSpeed: Double, retrograde: Double)] = [
-        .Sun: (6/120, "\u{2609}", 0.985628, 1.033942, 0),
-        .Moon: (10/120, "\u{263D}", 13.176157, 20.981417, 0),
-        .Mercury: (17/120, "\u{263F}", 0.985586, 2.212896, 2102550),
-        .Venus: (20/120, "\u{2640}", 0.983066, 1.266983, 3740235),
-        .Mars: (7/120, "\u{2642}", 0.523740, 0.797004, 6865268),
-        .Jupiter: (16/120, "\u{2643}", 0.083393, 0.244502, 10644662),
-        .Saturn: (19/120, "\u{2644}", 0.033544, 0.134413, 12176645),
-        .NorthNode: (18/120, "\u{260A}", -0.053040, 0.032170, 345600),
-        .SouthNode: (7/120, "\u{260B}", -0.053040, 0.032170, 345600)
+    private static let properties: [Planet: (dashaRatio: Double, symbol:  Character, avgSpeed: Double, maxSpeed: Double, retrograde: Double, synodicPeriod: Double)] = [
+        .Sun: (6/120, "\u{2609}", 0.985628, 1.033942, 0, 0),
+        .Moon: (10/120, "\u{263D}", 13.176157, 20.981417, 0, 0),
+        .Mercury: (17/120, "\u{263F}", 0.985586, 2.212896, 21, 116),
+        .Venus: (20/120, "\u{2640}", 0.983066, 1.266983, 41, 584),
+        .Mars: (7/120, "\u{2642}", 0.523740, 0.797004, 72, 780),
+        .Jupiter: (16/120, "\u{2643}", 0.083393, 0.244502, 121, 399),
+        .Saturn: (19/120, "\u{2644}", 0.033544, 0.134413, 138, 378),
+        .NorthNode: (18/120, "\u{260A}", -0.053040, 0.032170, 0, 0),
+        .SouthNode: (7/120, "\u{260B}", -0.053040, 0.032170, 0, 0)
     ]
     
     /**
@@ -62,28 +58,32 @@ public enum Planet: Int, CaseIterable {
     
     /**
      *Approximate* average speed in degrees / day for the given planet.
-     - Note: Calculated using one degree samples over 50 revolutions, 25 before 2020 and 25 after, for each planet. See `IndicEphemerisTest.testGetSpeeds()`.
+     - Note: Calculated using one degree samples over 50 revolutions, 25 before ReferenceDate and 25 after, for each planet. See `IndicEphemerisTest.testGetSpeeds()`.
      */
     public var avgSpeed: Double { Planet.properties[self]!.avgSpeed }
     
     /**
      *Approximate* maximum speed in degrees / day for the given planet.
-     - Note: Calculated using one degree samples over 50 revolutions, 25 before 2020 and 25 after, for each planet. See `IndicEphemerisTest.testGetSpeeds()`.
+     - Note: Calculated using one degree samples over 50 revolutions, 25 before ReferenceDate and 25 after, for each planet. See `IndicEphemerisTest.testGetSpeeds()`.
      */
     public var maxSpeed: Double { Planet.properties[self]!.maxSpeed }
     
     /**
-     *Approximate* maximum numbers of seconds that the given planet spends in retrograde motion.
-     - Note: Calculated over 50 revolutions, 25 before 2020 and 25 after, for each planet. See `IndicEphemerisTest.testGetRetrograde()`.
+     Average numbers of seconds that the given planet spends in retrograde motion.
+     - Note: Obtained from [Wikipedia](https://en.wikipedia.org/wiki/Apparent_retrograde_motion).
      */
-    public var retrograde: Double { Planet.properties[self]!.retrograde }
+    public var retrograde: Double { Planet.properties[self]!.retrograde * Calendar.Component.day.seconds }
+    
+    /**
+     Average numbers of seconds between ceneters of retrograde periods, also called *synodic period*.
+     - Note: Obtained from [Wikipedia](https://en.wikipedia.org/wiki/Apparent_retrograde_motion).
+     */
+    public var synodicPeriod: Double { Planet.properties[self]!.synodicPeriod * Calendar.Component.day.seconds }
 }
 
 public enum Nakshatra: Int, CaseIterable {
     case Ashwini = 0, Bharani, Krittika, Rohini, Mrigashira, Ardra, Punarvasu, Pushya, Ashlesha, Magha, PurvaPhalguni, UttaraPhalguni, Hasta, Chitra, Svati, Vishakha, Anuradha, Jyeshtha, Mula, PurvaAshadha, UttaraAshadha, Shravana, Dhanishta, Shatabhisha, PurvaBhadrapada, UttaraBhadrapada, Revati
-}
 
-extension Nakshatra {
     private static let properties: [Nakshatra: (ruler: Planet, deity: String)] = [
         .Ashwini: (.SouthNode, "Ashwinau"),
         .Bharani: (.Venus, "Yama"),

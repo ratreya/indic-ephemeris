@@ -81,11 +81,8 @@ class IndicEphemerisTest: XCTestCase {
     }
     
     func testDashas() throws {
-        let range = DateInterval(start: Date(), duration: 30*24*60*60)
-        print(range)
-        print(try DashaCalculator(ephemeris!).vimshottari(overlapping: range).map( { $0.description } ).joined(separator: "\n"))
-        print(try ephemeris!.position(for: .Moon).nakshatraLocation())
-        print(try DashaCalculator(ephemeris!).vimshottari().map( { $0.description } ).joined(separator: "\n"))
+        let dashas = try DashaCalculator(ephemeris!).vimshottari()
+        XCTAssertEqual((dashas.prenatal + dashas.postnatal).reduce(into: 0) { $0 += $1.period.duration }, 120 * Calendar.Component.year.seconds)
     }
     
     func testGranularity() throws {
@@ -140,7 +137,7 @@ class IndicEphemerisTest: XCTestCase {
     }
     
     func testPerson() throws {
-        let date = ISO8601DateFormatter().date(from: "1972-06-04T01:20:00+0000")!
+        let date = ISO8601DateFormatter().date(from: "1987-08-04T18:18:00+0000")!
         let place = Place(placeId: "Bengaluru", timezone: TimeZone(abbreviation: "IST")!, latitude: 12.97082225, longitude: 77.58582276, altitude: 918)
         let eph = IndicEphemeris(date: date, at: place)
         let moon = try eph.position(for: .Moon)

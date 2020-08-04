@@ -19,9 +19,9 @@ public enum DashaType: Int, CaseIterable {
 let dashaOrder: [Planet] = [.SouthNode, .Venus, .Sun, .Moon, .Mars, .NorthNode, .Jupiter, .Saturn, .Mercury]
 
 public class MetaDasha: CustomStringConvertible {
-    public let period: DateInterval
     public let planet: Planet
     public let type: DashaType
+    internal (set) public var period: DateInterval
     internal (set) public var subDasha: [MetaDasha]? {
         didSet {
             self.subDasha?.forEach() { $0.supraDasha = self }
@@ -94,23 +94,32 @@ public class DashaCalculator {
         }
         return result
     }
-
-    public func vimshottari() throws -> [MetaDasha] {
-        let moon = try ephemeris.position(for: .Moon).nakshatraLocation()
-        let elapsedAngle = Double(moon.degrees*3600 + moon.minutes*60 + moon.seconds)
-        let elapsedTime = elapsedAngle/secondsPerNakshatra * moon.nakshatra.ruler.dashaRatio * lifetimeInSeconds
-        return vimshottari(interval: DateInterval(start: ephemeris.dateUTC, duration: lifetimeInSeconds-elapsedTime), starting: moon.nakshatra.ruler, elapsed: elapsedTime)
-    }
-
-    public func vimshottari(overlapping range: DateInterval) throws -> [MetaDasha] {
-        var mahas = try vimshottari()
-        mahas = mahas.filter() { (maha) -> Bool in maha.period.intersects(range) }
+    
+    func overlapping(dashas: [MetaDasha], range: DateInterval, strict: Bool = false) -> [MetaDasha] {
+        let mahas = dashas.filter() { (maha) -> Bool in maha.period.intersects(range) }
+        if strict {
+            mahas.forEach { $0.period = $0.period.intersection(with: range)! }
+        }
         for maha in mahas {
-            maha.subDasha = maha.subDasha?.filter() { (antar) -> Bool in antar.period.intersects(range) }
-            for antar in maha.subDasha! {
-                antar.subDasha = antar.subDasha?.filter()  { (patyantar) -> Bool in patyantar.period.intersects(range) }
+            if let subDasha = maha.subDasha {
+                maha.subDasha = overlapping(dashas: subDasha, range: range, strict: strict)
             }
         }
         return mahas
+    }
+
+    public func vimshottari() throws -> (prenatal: [MetaDasha], postnatal: [MetaDasha]) {
+        let moon = try ephemeris.position(for: .Moon).nakshatraLocation()
+        let elapsedAngle = Double(moon.degrees*3600 + moon.minutes*60 + moon.seconds)
+        let elapsedTime = elapsedAngle/secondsPerNakshatra * moon.nakshatra.ruler.dashaRatio * lifetimeInSeconds
+        var prenatal = vimshottari(interval: DateInterval(start: ephemeris.dateUTC.advanced(by: -elapsedTime), duration: lifetimeInSeconds), starting: moon.nakshatra.ruler, elapsed: 0)
+        // Cut prenatal dasha interval to the point of birth
+        prenatal = overlapping(dashas: prenatal, range: DateInterval(start: ephemeris.dateUTC.advanced(by: -elapsedTime), duration: elapsedTime), strict: true)
+        let postnatal = vimshottari(interval: DateInterval(start: ephemeris.dateUTC, duration: lifetimeInSeconds-elapsedTime), starting: moon.nakshatra.ruler, elapsed: elapsedTime)
+        return (prenatal, postnatal)
+    }
+
+    public func vimshottari(overlapping range: DateInterval) throws -> [MetaDasha] {
+        return overlapping(dashas: try vimshottari().postnatal, range: range)
     }
 }

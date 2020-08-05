@@ -96,9 +96,9 @@ class IndicEphemerisTest: XCTestCase {
     }
     
     class TestConfig: Config {
-        let definition: RetrogradeDefinition
-        init(_ definition: RetrogradeDefinition) { self.definition = definition }
-        override var retrogradeDefinition: RetrogradeDefinition { definition }
+        let definition: FringePolicy
+        init(_ definition: FringePolicy) { self.definition = definition }
+        override var retrogradeDefinition: FringePolicy { definition }
     }
 
     func testRetrograde() throws {

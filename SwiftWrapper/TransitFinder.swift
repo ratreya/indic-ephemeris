@@ -146,13 +146,15 @@ public class TransitFinder {
     }
     
     func refineEdge(using eph: IndicEphemeris, satisfying predicate: (Position) throws -> Bool, during range: DateInterval, for planet: Planet, resolution upto: Calendar.Component? = nil) throws -> Date? {
-        let (inputValue, inputUnit) = range.duration.granularity
         let desiredUnit = upto ?? ephemeris.config.transitResolution
-        if inputUnit.isFiner(than: desiredUnit) || (inputUnit == desiredUnit && inputValue == 1) {
+        if range.duration <= desiredUnit.seconds {
             return try eph.positions(for: planet, at: [range.start, range.end]).filter { try predicate($0.1) }.first?.0
         }
+        let inputUnit = range.duration.granularity.unit
         let next = inputUnit.isCoarser(than: desiredUnit) ? inputUnit.nextFiner! : inputUnit
-        let timePositions = try eph.positions(for: planet, during: range + inputUnit.seconds, every: 1, unit: next)
+        // Always include range.end at which point the predicate held otherwise there is a risk that the edge will slip through our sampling
+        let dates = (try ephemeris.dates(during: range + inputUnit.seconds, every: 1, unit: next) + [range.end]).sorted()
+        let timePositions = try eph.positions(for: planet, at: dates)
         if let index = try timePositions.firstIndex(where: { try predicate($0.1) }) {
             if index == 0 { return timePositions[index].0 }
             return try refineEdge(using: eph, satisfying: predicate, during: DateInterval(start: timePositions[index - 1].0, end: timePositions[index].0), for: planet)
@@ -215,24 +217,24 @@ public class TransitFinder {
         for transit in ranges {
             var samples = [Date]()
             // Leading edge
-            if let retro = try retrogrades(of: planet, overlapping: transit.beforeStart(duration: 2 * planet.retrograde)).first { // Incorrect exlusion case
+            if let retro = try retrogrades(of: planet, overlapping: transit.beforeStart(duration: 2 * planet.retrograde), definition: .maximal).first { // Incorrect exlusion case
                 samples.append(transit.start.advanced(by: (-2 * planet.retrograde) - Calendar.Component.day.seconds)) // 1: one day for safety
                 samples.append(contentsOf: [retro.start, retro.end]) // 2, 3
                 samples.append(transit.start.advanced(by: transit.duration/4)) // 4
             }
-            if let retro = try retrogrades(of: planet, overlapping: transit.fromStart(duration: 2 * planet.retrograde)).first { // Incorrect inclusion case
+            if let retro = try retrogrades(of: planet, overlapping: transit.fromStart(duration: 2 * planet.retrograde), definition: .maximal).first { // Incorrect inclusion case
                 samples.append(transit.start) // 1
                 samples.append(contentsOf: [retro.start, retro.end]) // 2, 3
                 samples.append(transit.start.advanced(by: (2 * planet.retrograde) + Calendar.Component.day.seconds)) // 4
             }
             samples.append(transit.start)
             // Traling edge
-            if let retro = try retrogrades(of: planet, overlapping: transit.beforeEnd(duration: 2 * planet.retrograde)).first { // Incorrect inlusion case
+            if let retro = try retrogrades(of: planet, overlapping: transit.beforeEnd(duration: 2 * planet.retrograde), definition: .maximal).first { // Incorrect inlusion case
                 samples.append(transit.end.advanced(by: (-2 * planet.retrograde) - Calendar.Component.day.seconds)) // 5: one day for safety
                 samples.append(contentsOf: [retro.start, retro.end]) // 6, 7
                 samples.append(transit.end) // 8
             }
-            if let retro = try retrogrades(of: planet, overlapping: transit.fromEnd(duration: 2 * planet.retrograde)).first { // Incorrect exclusion case
+            if let retro = try retrogrades(of: planet, overlapping: transit.fromEnd(duration: 2 * planet.retrograde), definition: .maximal).first { // Incorrect exclusion case
                 samples.append(transit.end.advanced(by: 3600))  // 5: one day for safety
                 samples.append(contentsOf: [retro.start, retro.end])    // 6, 7
                 samples.append(transit.end.advanced(by: (2 * planet.retrograde) + Calendar.Component.day.seconds)) // 8
@@ -250,7 +252,7 @@ public class TransitFinder {
         return result
     }
     
-    public func retrogrades(of planet: Planet, overlapping range: DateInterval) throws -> [DateInterval] {
+    public func retrogrades(of planet: Planet, overlapping range: DateInterval, definition override: FringePolicy? = nil) throws -> [DateInterval] {
         if planet.retrograde == 0 { return [] }
         let predicate: (Position) throws -> Bool = (planet == .NorthNode || planet == .SouthNode) ? { $0.speed! > 0 } : { $0.speed! < 0 }
         // Expand the interval if the planet is retrograde at the edges
@@ -265,6 +267,7 @@ public class TransitFinder {
         // All planets have a peculiar retrograde motion where it sometimes briefly reverses course at the fringes of its retrograde period
         // Length of fringe is proportional to synodic period - we do an equivalent of 2 days for Saturn
         let maxFringePeriod: Double = (2/378)*planet.synodicPeriod
+        let definition = override ?? ephemeris.config.retrogradeDefinition
         let computation = { (eph: IndicEphemeris, shard: DateInterval) throws -> [DateInterval] in
             let retros = try self.transits(using: eph, for: planet, satisfying: predicate, during: interval, sampling: planet.retrograde/2, resolution: .day)
             var samples = [(Date, Position)]()
@@ -279,12 +282,12 @@ public class TransitFinder {
                 samples.append(contentsOf: try eph.positions(for: planet, during: retro.fromEnd(duration: maxFringePeriod), every: 1, unit: .hour))
             }
             let intervals = try self.intervals(using: eph, for: planet, in: samples, satisfying: predicate)
-            switch self.ephemeris.config.retrogradeDefinition {
+            switch definition {
             case .strict:
                 return intervals
             case .largest, .maximal:
                 let policy = { (fragments: [DateInterval]) -> DateInterval in
-                    switch self.ephemeris.config.retrogradeDefinition {
+                    switch definition {
                     case .largest:
                         return fragments.max(by: { $0.duration < $1.duration })!
                     case .maximal:

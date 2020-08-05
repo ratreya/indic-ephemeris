@@ -9,6 +9,16 @@
 
 import Foundation
 
+/**
+ Planets, especially outer planets have a peculiar retrograde motion where it sometimes briefly reverses course at the fringes of its retrograde period. This enum speficied various schemes to deal with these fragments.
+ - `strict`: treat every contiguous interval of negative speed as a separate retrograde interval.
+ - `covering`: merge fringe retrogrates into a maximal covering interval. This is the default.
+ - `longest`: ignore the fringe retrogrades and just return the longest contiguous segment.
+ */
+public enum FringePolicy: Int {
+    case strict = 0, maximal, largest
+}
+
 /// This class provides default config values that the client can override, typically using `UserDefaults` and pass an instance into `IndicEphemeris`.
 open class Config {
     /**
@@ -51,16 +61,6 @@ open class Config {
      Number of positions beyond which to parallelize.
      */
     open var concurrencyThreshold: Int { 1000 }
-
-    /**
-     Planets, especially outer planets have a peculiar retrograde motion where it sometimes briefly reverses course at the fringes of its retrograde period. This enum speficied various schemes to deal with these fragments.
-     - `strict`: treat every contiguous interval of negative speed as a separate retrograde interval.
-     - `covering`: merge fringe retrogrates into a maximal covering interval. This is the default.
-     - `longest`: ignore the fringe retrogrades and just return the longest contiguous segment.
-     */
-    public enum RetrogradeDefinition: Int {
-        case strict = 0, maximal, largest
-    }
     
-    open var retrogradeDefinition: RetrogradeDefinition { .maximal }
+    open var retrogradeDefinition: FringePolicy { .maximal }
 }

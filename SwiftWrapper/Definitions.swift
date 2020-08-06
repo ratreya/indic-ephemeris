@@ -125,6 +125,9 @@ extension Double {
     }
 }
 
+public typealias NakshatraLocation = (degrees: Int, nakshatra: Nakshatra, minutes: Int, seconds: Int)
+public typealias HouseLocation = (degrees: Int, house: House, minutes: Int, seconds: Int)
+
 public struct Position {
     public let longitude: Double
     public let latitude: Double?
@@ -142,7 +145,7 @@ public struct Position {
         self.speed = speed
     }
     
-    public func houseLocation() throws -> (degrees: Int, house: House, minutes: Int, seconds: Int) {
+    public func houseLocation() throws -> HouseLocation {
         let degrees: UnsafeMutablePointer<Int32> = UnsafeMutablePointer.allocate(capacity: 1)
         let minutes: UnsafeMutablePointer<Int32> = UnsafeMutablePointer.allocate(capacity: 1)
         let seconds: UnsafeMutablePointer<Int32> = UnsafeMutablePointer.allocate(capacity: 1)
@@ -157,7 +160,7 @@ public struct Position {
         return (Int(degrees.pointee), House(rawValue: Int(sign.pointee))!, Int(minutes.pointee), Int(seconds.pointee))
     }
     
-    public func nakshatraLocation() -> (degrees: Int, nakshatra: Nakshatra, minutes: Int, seconds: Int) {
+    public func nakshatraLocation() -> NakshatraLocation {
         let degrees: UnsafeMutablePointer<Int32> = UnsafeMutablePointer.allocate(capacity: 1)
         let minutes: UnsafeMutablePointer<Int32> = UnsafeMutablePointer.allocate(capacity: 1)
         let seconds: UnsafeMutablePointer<Int32> = UnsafeMutablePointer.allocate(capacity: 1)

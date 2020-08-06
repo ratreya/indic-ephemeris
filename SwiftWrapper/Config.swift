@@ -16,7 +16,7 @@ import Foundation
  - `longest`: ignore the fringe retrogrades and just return the longest contiguous segment.
  */
 public enum FringePolicy: Int {
-    case strict = 0, maximal, largest
+    case strict = 0, covering, largest
 }
 
 /// This class provides default config values that the client can override, typically using `UserDefaults` and pass an instance into `IndicEphemeris`.
@@ -62,5 +62,7 @@ open class Config {
      */
     open var concurrencyThreshold: Int { 1000 }
     
-    open var retrogradeDefinition: FringePolicy { .maximal }
+    open var retrogradeDefinition: FringePolicy { .covering }
+    
+    open var transitDefinition: FringePolicy { .covering }
 }

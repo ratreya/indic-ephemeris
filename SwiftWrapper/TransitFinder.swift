@@ -206,10 +206,11 @@ public class TransitFinder {
      Sampling logic used to find transits can have incorrect ommisions or inclusions of time intervals near edges due to retrograde motion of planets. This function fixes those inaccuracies.
      */
     func fixEdges(of ranges: [DateInterval], for planet: Planet, through degrees: DegreeRange) throws -> [DateInterval] {
+        let maxFringePeriod = 2 * planet.retrograde
         if planet.retrograde == 0 { return ranges }
         // The idea is to force samples at locations such that all potential edges will be detected.
         // For this to work, the interval between transits per revolution must be greater than 2*R on both sides.
-        if planet.maxDegrees(for: 4 * planet.retrograde) > 360 - degrees.size + 6 { // +6 for safety
+        if planet.maxDegrees(for: 2 * maxFringePeriod) > 360 - degrees.size + 6 { // +6 for safety
             ephemeris.log.warning("There isen't enough space to fixEdges for \(planet) through \(degrees) in \(ranges).")
             return ranges
         }
@@ -217,27 +218,31 @@ public class TransitFinder {
         for transit in ranges {
             var samples = [Date]()
             // Leading edge
-            if let retro = try retrogrades(of: planet, overlapping: transit.beforeStart(duration: 2 * planet.retrograde), definition: .maximal).first { // Incorrect exlusion case
-                samples.append(transit.start.advanced(by: (-2 * planet.retrograde) - Calendar.Component.day.seconds)) // 1: one day for safety
-                samples.append(contentsOf: [retro.start, retro.end]) // 2, 3
+            var retros = try retrogrades(of: planet, overlapping: transit.beforeStart(duration: maxFringePeriod), definition: .strict)
+            if !retros.isEmpty { // Incorrect exlusion case
+                samples.append(transit.start.advanced(by: -maxFringePeriod - Calendar.Component.day.seconds)) // 1: one day for safety
+                samples.append(contentsOf: retros.reduce(into: [], { $0.append(contentsOf: [$1.start, $1.end]) })) // 2, 3
                 samples.append(transit.start.advanced(by: transit.duration/4)) // 4
             }
-            if let retro = try retrogrades(of: planet, overlapping: transit.fromStart(duration: 2 * planet.retrograde), definition: .maximal).first { // Incorrect inclusion case
+            retros = try retrogrades(of: planet, overlapping: transit.fromStart(duration: maxFringePeriod), definition: .strict)
+            if !retros.isEmpty { // Incorrect inclusion case
                 samples.append(transit.start) // 1
-                samples.append(contentsOf: [retro.start, retro.end]) // 2, 3
-                samples.append(transit.start.advanced(by: (2 * planet.retrograde) + Calendar.Component.day.seconds)) // 4
+                samples.append(contentsOf: retros.reduce(into: [], { $0.append(contentsOf: [$1.start, $1.end]) })) // 2, 3
+                samples.append(transit.start.advanced(by: maxFringePeriod + Calendar.Component.day.seconds)) // 4
             }
             samples.append(transit.start)
             // Traling edge
-            if let retro = try retrogrades(of: planet, overlapping: transit.beforeEnd(duration: 2 * planet.retrograde), definition: .maximal).first { // Incorrect inlusion case
-                samples.append(transit.end.advanced(by: (-2 * planet.retrograde) - Calendar.Component.day.seconds)) // 5: one day for safety
-                samples.append(contentsOf: [retro.start, retro.end]) // 6, 7
+            retros = try retrogrades(of: planet, overlapping: transit.beforeEnd(duration: maxFringePeriod), definition: .strict)
+            if !retros.isEmpty { // Incorrect inlusion case
+                samples.append(transit.end.advanced(by: -maxFringePeriod - Calendar.Component.day.seconds)) // 5: one day for safety
+                samples.append(contentsOf: retros.reduce(into: [], { $0.append(contentsOf: [$1.start, $1.end]) })) // 6, 7
                 samples.append(transit.end) // 8
             }
-            if let retro = try retrogrades(of: planet, overlapping: transit.fromEnd(duration: 2 * planet.retrograde), definition: .maximal).first { // Incorrect exclusion case
-                samples.append(transit.end.advanced(by: 3600))  // 5: one day for safety
-                samples.append(contentsOf: [retro.start, retro.end])    // 6, 7
-                samples.append(transit.end.advanced(by: (2 * planet.retrograde) + Calendar.Component.day.seconds)) // 8
+            retros = try retrogrades(of: planet, overlapping: transit.fromEnd(duration: maxFringePeriod), definition: .strict)
+            if !retros.isEmpty { // Incorrect exclusion case
+                samples.append(transit.end.advanced(by: 3600)) // 5: one day for safety
+                samples.append(contentsOf: retros.reduce(into: [], { $0.append(contentsOf: [$1.start, $1.end]) })) // 6, 7
+                samples.append(transit.end.advanced(by: maxFringePeriod + Calendar.Component.day.seconds)) // 8
             }
             samples.append(transit.end)
             if samples.count == 2 {
@@ -249,7 +254,38 @@ public class TransitFinder {
                 result.append(contentsOf: try intervals(using: ephemeris, for: planet, in: timePositions, satisfying: { degrees.contains($0.longitude) }))
             }
         }
-        return result
+        return handleFringe(for: result, using: ephemeris.config.transitDefinition, maxInterfringe: maxFringePeriod)
+    }
+    
+    func handleFringe(for intervals: [DateInterval], using definition: FringePolicy, maxInterfringe: TimeInterval) -> [DateInterval] {
+        switch definition {
+        case .strict:
+            return intervals
+        case .largest, .covering:
+            let policy = { (fragments: [DateInterval]) -> DateInterval in
+                switch definition {
+                case .largest:
+                    return fragments.max(by: { $0.duration < $1.duration })!
+                case .covering:
+                    return DateInterval(start: fragments.first!.start, end: fragments.last!.end)
+                default:
+                    fatalError()
+                }
+            }
+            var results = [DateInterval]()
+            var fragments = [DateInterval]()
+            for interval in intervals {
+                if let last = fragments.last, (interval.start.timeIntervalSince1970 - last.end.timeIntervalSince1970) > maxInterfringe {
+                    results.append(policy(fragments))
+                    fragments.removeAll()
+                }
+                else {
+                    fragments.append(interval)
+                }
+            }
+            if !fragments.isEmpty { results.append(policy(fragments)) }
+            return results
+        }
     }
     
     public func retrogrades(of planet: Planet, overlapping range: DateInterval, definition override: FringePolicy? = nil) throws -> [DateInterval] {
@@ -282,34 +318,7 @@ public class TransitFinder {
                 samples.append(contentsOf: try eph.positions(for: planet, during: retro.fromEnd(duration: maxFringePeriod), every: 1, unit: .hour))
             }
             let intervals = try self.intervals(using: eph, for: planet, in: samples, satisfying: predicate)
-            switch definition {
-            case .strict:
-                return intervals
-            case .largest, .maximal:
-                let policy = { (fragments: [DateInterval]) -> DateInterval in
-                    switch definition {
-                    case .largest:
-                        return fragments.max(by: { $0.duration < $1.duration })!
-                    case .maximal:
-                        return DateInterval(start: fragments.first!.start, end: fragments.last!.end)
-                    default:
-                        fatalError()
-                    }
-                }
-                var results = [DateInterval]()
-                var fragments = [DateInterval]()
-                for interval in intervals {
-                    if let last = fragments.last, (interval.start.timeIntervalSince1970 - last.end.timeIntervalSince1970) > maxFringePeriod {
-                        results.append(policy(fragments))
-                        fragments.removeAll()
-                    }
-                    else {
-                        fragments.append(interval)
-                    }
-                }
-                if !fragments.isEmpty { results.append(policy(fragments)) }
-                return results
-            }
+            return self.handleFringe(for: intervals, using: definition, maxInterfringe: maxFringePeriod)
         }
         // Now execute the computation concurrently or not depending on number of initial samples
         if interval.duration / (planet.retrograde/2) < Double(ephemeris.config.concurrencyThreshold) {

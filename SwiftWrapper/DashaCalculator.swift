@@ -68,13 +68,13 @@ public class DashaCalculator {
         var residual = elapsed
         while residual >= 0 {
             firstPlanet = dashaOrder[index]
-            residual -= firstPlanet.dashaRatio * totalDuration
+            residual -= firstPlanet.vimshottariRatio * totalDuration
             index = (index + 1) % dashaOrder.count
         }
         let firstPeriod = DateInterval(start: interval.start, duration: abs(residual))
         let firstDasha = MetaDasha(period: firstPeriod, planet: firstPlanet, type: depth)
         if depth < ephemeris.config.maxDashaDepth {
-            let subElapsed = firstPlanet.dashaRatio * totalDuration + residual
+            let subElapsed = firstPlanet.vimshottariRatio * totalDuration + residual
             firstDasha.subDasha = vimshottari(interval: firstPeriod, starting: firstPlanet, elapsed: subElapsed, depth: depth + 1)
         }
         // Rest of the periods naturally follow in order
@@ -84,7 +84,7 @@ public class DashaCalculator {
         while date < interval.end {
             next = (next + 1) % dashaOrder.count
             let nextPlanet = dashaOrder[next]
-            let nextPeriod = DateInterval(start: date, duration: nextPlanet.dashaRatio * totalDuration)
+            let nextPeriod = DateInterval(start: date, duration: nextPlanet.vimshottariRatio * totalDuration)
             let subDasha = MetaDasha(period: nextPeriod, planet: nextPlanet, type: depth)
             if depth < ephemeris.config.maxDashaDepth {
                 subDasha.subDasha = vimshottari(interval: nextPeriod, starting: nextPlanet, elapsed: 0, depth: depth + 1)
@@ -111,7 +111,7 @@ public class DashaCalculator {
     public func vimshottari() throws -> (prenatal: [MetaDasha], postnatal: [MetaDasha]) {
         let moon = try ephemeris.position(for: .Moon).nakshatraLocation()
         let elapsedAngle = Double(moon.degrees*3600 + moon.minutes*60 + moon.seconds)
-        let elapsedTime = elapsedAngle/secondsPerNakshatra * moon.nakshatra.ruler.dashaRatio * lifetimeInSeconds
+        let elapsedTime = elapsedAngle/secondsPerNakshatra * moon.nakshatra.ruler.vimshottariRatio * lifetimeInSeconds
         var prenatal = vimshottari(interval: DateInterval(start: ephemeris.dateUTC.advanced(by: -elapsedTime), duration: lifetimeInSeconds), starting: moon.nakshatra.ruler, elapsed: 0)
         // Cut prenatal dasha interval to the point of birth
         prenatal = overlapping(dashas: prenatal, range: DateInterval(start: ephemeris.dateUTC.advanced(by: -elapsedTime), duration: elapsedTime), strict: true)

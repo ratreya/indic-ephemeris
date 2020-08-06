@@ -34,7 +34,7 @@ public enum Planet: Int, CaseIterable {
     static func < (left: Planet, right: Planet) -> Bool { left.rawValue < right.rawValue }
     static func <= (left: Planet, right: Planet) -> Bool { left.rawValue <= right.rawValue }
 
-    private static let properties: [Planet: (dashaRatio: Double, symbol:  Character, avgSpeed: Double, maxSpeed: Double, retrograde: Double, synodicPeriod: Double)] = [
+    private static let properties: [Planet: (vimshottariRatio: Double, symbol:  Character, avgSpeed: Double, maxSpeed: Double, retrograde: Double, synodicPeriod: Double)] = [
         .Sun: (6/120, "\u{2609}", 0.985628, 1.033942, 0, 0),
         .Moon: (10/120, "\u{263D}", 13.176157, 20.981417, 0, 0),
         .Mercury: (17/120, "\u{263F}", 0.985586, 2.212896, 21, 116),
@@ -49,7 +49,7 @@ public enum Planet: Int, CaseIterable {
     /**
      Dasha period in years of the given planet divided by 120 years.
      */
-    public var dashaRatio: Double { Planet.properties[self]!.dashaRatio }
+    public var vimshottariRatio: Double { Planet.properties[self]!.vimshottariRatio }
     
     /**
      Unicode symbol for the given planet.
@@ -210,5 +210,5 @@ public enum Ayanamsha: Int, CaseIterable {
 }
 
 internal let lifetimeInYears = 120.0
-internal let lifetimeInSeconds = lifetimeInYears * 365.0 * 24.0 * 60.0 * 60.0
+internal let lifetimeInSeconds = lifetimeInYears * Calendar.Component.year.seconds
 internal let secondsPerNakshatra = 48000.0

@@ -10,10 +10,57 @@
 import Foundation
 
 /**
- - Important: Since Swiss Ephemeris uses Thread Local Storage, you will see unexpected behavior if you pass an instance of this class between threads. For the same reason, this class does not call `swe_close()` in `deinit`. The consumers of this class should call `swe_close()` at the end of their thread lifecycle. Furthermore, the `Config` passed into a new instances of this class on a given thread will affect all previous instances created on the same thread. *Hence, it is advisible to only have one instance of this class per thread at any given time.*
+ Encapsulation of logic to either run on a fixed thread or on the caller thread. Swiss Ephemeris uses thread-local store and so, the only way to encapsulate state is to run all swe_* functions on the same thread.
+ - Important: `ThreadExecutor` itself is not thread-safe.
  */
+fileprivate final class ThreadExecutor: NSObject {
+    private var useCaller: Bool
+    private var work: () -> Void = {}
+    private var thread: Thread?
+    private var start: DispatchSemaphore?
+    private var end: DispatchSemaphore?
+    
+    fileprivate init(_ useCaller: Bool) {
+        self.useCaller = useCaller
+        super.init()
+        if !useCaller {
+            start = DispatchSemaphore(value: 0)
+            end = DispatchSemaphore(value: 0)
+            thread = Thread(target: self, selector: #selector(self.threadMain), object: nil)
+            thread!.start()
+        }
+    }
+
+    @objc fileprivate func threadMain() {
+        while true {
+            start!.wait()
+            if thread!.isCancelled { break }
+            work()
+            end!.signal()
+        }
+    }
+    
+    deinit {
+        thread?.cancel()
+        start?.signal()
+    }
+
+    fileprivate func execute(action: @escaping () -> Void) {
+        if useCaller {
+            action()
+            return
+        }
+        /// Access to `work` is not synchronized as the whole class is not guaranteed to be thread-safe
+        work = action
+        start!.signal()
+        end!.wait()
+    }
+}
+
 public class IndicEphemeris {
     private let queue: DispatchQueue
+    private let executor: ThreadExecutor
+    private var julian = 0.0
     let config: Config
     let dateUTC: Date
     let place: Place
@@ -21,19 +68,32 @@ public class IndicEphemeris {
     
     /**
      - Parameters:
-        - date: time of birth at local timezone
-        - at: `Place` of birth
+        - date: time of birth at local timezone.
+        - at: `Place` of birth.
+        - config: (optional) configuration to use. If omitted, then default configuration is used.
+        - useCaller: (optional) defailt is to use a separate thread to encapsulate internal state.
+     - Note: if `useCaller` is `true` then the internal state of Swiss Ephemeris is shared for all instances created on the caller thread. If `false`, then each instance fully encapsulates its internal state.
      */
-    public init(date: Date, at: Place, config userConfig: Config? = nil) {
-        self.config = userConfig ?? Config()
-        self.log = Logger(level: config.logLevel)
-        self.place = at
-        self.dateUTC = Calendar.current.date(byAdding: .second, value: -at.timezone.secondsFromGMT(for: date), to: date)!
-        self.queue = DispatchQueue(label: "com.daivajnanam.IndicEphemeris", qos: .userInitiated, attributes: .concurrent, autoreleaseFrequency: .workItem)
-        let path = (config.dataPath as NSString).utf8String
-        swe_set_ephe_path(UnsafeMutablePointer<Int8>(mutating: path))
-        swe_set_topo(at.longitude, at.latitude, at.altitude)
-        swe_set_sid_mode(Int32(config.ayanamsha.rawValue), 0, 0)
+    public init(date: Date, at: Place, config userConfig: Config? = nil, useCaller: Bool = false) {
+        config = userConfig ?? Config()
+        log = Logger(level: config.logLevel)
+        place = at
+        dateUTC = Calendar.current.date(byAdding: .second, value: -at.timezone.secondsFromGMT(for: date), to: date)!
+        queue = DispatchQueue(label: "com.daivajnanam.IndicEphemeris", qos: .userInitiated, attributes: .concurrent, autoreleaseFrequency: .workItem)
+        executor = ThreadExecutor(useCaller)
+        julian = try! julianDay()
+        executor.execute {
+            let path = (self.config.dataPath as NSString).utf8String
+            swe_set_ephe_path(UnsafeMutablePointer<Int8>(mutating: path))
+            swe_set_topo(at.longitude, at.latitude, at.altitude)
+            swe_set_sid_mode(Int32(self.config.ayanamsha.rawValue), 0, 0)
+        }
+    }
+    
+    deinit {
+        executor.execute {
+            swe_close()
+        }
     }
     
     internal func julianDay(for date: Date? = nil) throws -> Double {
@@ -52,7 +112,11 @@ public class IndicEphemeris {
             times.deallocate()
             error.deallocate()
         }
-        if swe_utc_to_jd(Int32(components.year!), Int32(components.month!), Int32(components.day!), Int32(components.hour!), Int32(components.minute!), Double(components.second!), calendarType, times, error) < 0 {
+        var retval: Int32 = 0
+        executor.execute {
+            retval = swe_utc_to_jd(Int32(components.year!), Int32(components.month!), Int32(components.day!), Int32(components.hour!), Int32(components.minute!), Double(components.second!), calendarType, times, error)
+        }
+        if retval < 0 {
             throw EphemerisError.runtimeError(String(cString: error))
         }
         let message = String(cString: error)
@@ -84,7 +148,11 @@ public class IndicEphemeris {
         for date in dates {
             // For South Node, get North Node position and invert it
             let ordinal = planet == .SouthNode ? Planet.NorthNode.rawValue : planet.rawValue
-            if swe_calc_ut(try julianDay(for: date), Int32(ordinal), SEFLG_SWIEPH | SEFLG_TOPOCTR | SEFLG_SIDEREAL | SEFLG_SPEED, positions, error) < 0 {
+            var retval: Int32 = 0
+            executor.execute {
+                retval = swe_calc_ut(self.julian, Int32(ordinal), SEFLG_SWIEPH | SEFLG_TOPOCTR | SEFLG_SIDEREAL | SEFLG_SPEED, positions, error)
+            }
+            if retval < 0 {
                 throw EphemerisError.runtimeError(String(cString: error))
             }
             let message = String(cString: error)
@@ -123,7 +191,11 @@ public class IndicEphemeris {
         }
         var result = [(Date, Phase)]()
         for date in dates {
-            if swe_pheno_ut(try julianDay(for: date), Int32(planet.rawValue), SEFLG_TOPOCTR, response, error) < 0 {
+            var retval: Int32 = 0
+            executor.execute {
+                retval = swe_pheno_ut(self.julian, Int32(planet.rawValue), SEFLG_TOPOCTR, response, error)
+            }
+            if retval < 0 {
                 throw EphemerisError.runtimeError(String(cString: error))
             }
             let message = String(cString: error)
@@ -150,7 +222,11 @@ public class IndicEphemeris {
             cusps.deallocate()
             ascmc.deallocate()
         }
-        if swe_houses_ex(try julianDay(), SEFLG_SIDEREAL, place.latitude, place.longitude, Int32(Character("W").asciiValue!), cusps, ascmc) < 0 {
+        var retval: Int32 = 0
+        executor.execute {
+            retval = swe_houses_ex(self.julian, SEFLG_SIDEREAL, self.place.latitude, self.place.longitude, Int32(Character("W").asciiValue!), cusps, ascmc)
+        }
+        if retval < 0 {
             throw EphemerisError.runtimeError("swe_houses_ex returned error for unknown reasons")
         }
         return (Array(UnsafeBufferPointer(start: cusps, count: 13)), Array(UnsafeBufferPointer(start: ascmc, count: 10)))
@@ -185,7 +261,7 @@ public class IndicEphemeris {
         for index in 0..<config.concurrency {
             group.enter()
             queue.async(group: group) {
-                let eph = IndicEphemeris(date: self.dateUTC, at: self.place, config: self.config)
+                let eph = IndicEphemeris(date: self.dateUTC, at: self.place, config: self.config, useCaller: true)
                 var shardResult: AsycResult<T>
                 do {
                     shardResult = .result(try map(eph, shards[index]))

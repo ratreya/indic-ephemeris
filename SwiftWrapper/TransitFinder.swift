@@ -130,7 +130,7 @@ extension Planet {
 
 public class TransitFinder {
     private let ephemeris: IndicEphemeris
-    private let intervalStitcher = { (shardResult: [DateInterval], previous: inout [DateInterval]?) -> Void in
+    private static let intervalStitcher = { (shardResult: [DateInterval], previous: inout [DateInterval]?) -> Void in
         if previous == nil { previous = [] }
         if let last = previous!.popLast(), let next = shardResult.first, last.end == next.start {
             previous!.append(last + next.duration)
@@ -145,15 +145,15 @@ public class TransitFinder {
         self.ephemeris = ephemeris
     }
     
-    func refineEdge(using eph: IndicEphemeris, satisfying predicate: (Position) throws -> Bool, during range: DateInterval, for planet: Planet, resolution upto: Calendar.Component? = nil) throws -> Date? {
-        let desiredUnit = upto ?? ephemeris.config.transitResolution
+    static func refineEdge(using eph: IndicEphemeris, satisfying predicate: (Position) throws -> Bool, during range: DateInterval, for planet: Planet, resolution upto: Calendar.Component? = nil) throws -> Date? {
+        let desiredUnit = upto ?? eph.config.transitResolution
         if range.duration <= desiredUnit.seconds {
             return try eph.positions(for: planet, at: [range.start, range.end]).filter { try predicate($0.1) }.first?.0
         }
         let inputUnit = range.duration.granularity.unit
         let next = inputUnit.isCoarser(than: desiredUnit) ? inputUnit.nextFiner! : inputUnit
         // Always include range.end at which point the predicate held otherwise there is a risk that the edge will slip through our sampling
-        let dates = (try ephemeris.dates(during: range + inputUnit.seconds, every: 1, unit: next) + [range.end]).sorted()
+        let dates = (try eph.dates(during: range + next.seconds, every: 1, unit: next) + [range.end]).sorted()
         let timePositions = try eph.positions(for: planet, at: dates)
         if let index = try timePositions.firstIndex(where: { try predicate($0.1) }) {
             if index == 0 { return timePositions[index].0 }
@@ -162,7 +162,7 @@ public class TransitFinder {
         return nil
     }
     
-    func intervals(using eph: IndicEphemeris, for planet: Planet, in timePositions: [(Date, Position)], satisfying predicate: (Position) throws -> Bool, resolution upto: Calendar.Component? = nil) throws -> [DateInterval] {
+    static func intervals(using eph: IndicEphemeris, for planet: Planet, in timePositions: [(Date, Position)], satisfying predicate: (Position) throws -> Bool, resolution upto: Calendar.Component? = nil) throws -> [DateInterval] {
         var result = [DateInterval]()
         var intervalStart: Date? = nil
         for index in timePositions.indices {
@@ -182,7 +182,7 @@ public class TransitFinder {
         return result
     }
     
-    func transits(using eph: IndicEphemeris, for planet: Planet, satisfying predicate: (Position) throws -> Bool, during interval: DateInterval, sampling time: TimeInterval, resolution upto: Calendar.Component? = nil) throws -> [DateInterval] {
+    static func transits(using eph: IndicEphemeris, for planet: Planet, satisfying predicate: (Position) throws -> Bool, during interval: DateInterval, sampling time: TimeInterval, resolution upto: Calendar.Component? = nil) throws -> [DateInterval] {
         let timePositions = try eph.positions(for: planet, during: interval, every: time)
         return try intervals(using: eph, for: planet, in: timePositions, satisfying: predicate, resolution: upto)
     }
@@ -251,7 +251,7 @@ public class TransitFinder {
             else {
                 // We don't have to worry about samples of one transit overflowing into the next because the next transit is a whole revolution away
                 let timePositions = try ephemeris.positions(for: planet, at: samples.sorted())
-                result.append(contentsOf: try intervals(using: ephemeris, for: planet, in: timePositions, satisfying: { degrees.contains($0.longitude) }))
+                result.append(contentsOf: try TransitFinder.intervals(using: ephemeris, for: planet, in: timePositions, satisfying: { degrees.contains($0.longitude) }))
             }
         }
         return handleFringe(for: result, using: ephemeris.config.transitDefinition, maxInterfringe: maxFringePeriod)
@@ -305,7 +305,7 @@ public class TransitFinder {
         let maxFringePeriod: Double = (2/378)*planet.synodicPeriod
         let definition = override ?? ephemeris.config.retrogradeDefinition
         let computation = { (eph: IndicEphemeris, shard: DateInterval) throws -> [DateInterval] in
-            let retros = try self.transits(using: eph, for: planet, satisfying: predicate, during: interval, sampling: planet.retrograde/2, resolution: .day)
+            let retros = try TransitFinder.transits(using: eph, for: planet, satisfying: predicate, during: interval, sampling: planet.retrograde/2, resolution: .day)
             var samples = [(Date, Position)]()
             for retro in retros {
                 if retro.duration < planet.retrograde/2 { // This is a fringe and will be caught by the main retrogration
@@ -317,7 +317,7 @@ public class TransitFinder {
                 samples.append(contentsOf: try eph.positions(for: planet, during: retro.beforeEnd(duration: maxFringePeriod), every: 1, unit: .hour))
                 samples.append(contentsOf: try eph.positions(for: planet, during: retro.fromEnd(duration: maxFringePeriod), every: 1, unit: .hour))
             }
-            let intervals = try self.intervals(using: eph, for: planet, in: samples, satisfying: predicate)
+            let intervals = try TransitFinder.intervals(using: eph, for: planet, in: samples, satisfying: predicate)
             return self.handleFringe(for: intervals, using: definition, maxInterfringe: maxFringePeriod)
         }
         // Now execute the computation concurrently or not depending on number of initial samples
@@ -327,7 +327,7 @@ public class TransitFinder {
         else {
             return try ephemeris.mapReduce(during: interval, map: { (eph: IndicEphemeris, shard: DateInterval) throws -> [DateInterval] in
                 try computation(eph, shard)
-            }, reduce: intervalStitcher)
+            }, reduce: TransitFinder.intervalStitcher)
         }
     }
     
@@ -347,12 +347,12 @@ public class TransitFinder {
         // Determine if it makes sense to parallelize
         let sampling = planet.minTime(for: degrees.size)
         if range.duration / sampling < Double(ephemeris.config.concurrencyThreshold) {
-            result = try transits(using: ephemeris, for: planet, satisfying: { degrees.contains($0.longitude) }, during: range, sampling: sampling)
+            result = try TransitFinder.transits(using: ephemeris, for: planet, satisfying: { degrees.contains($0.longitude) }, during: range, sampling: sampling)
         }
         else {
             result = try ephemeris.mapReduce(during: range, map: { (eph: IndicEphemeris, shard: DateInterval) throws -> [DateInterval] in
-                try self.transits(using: eph, for: planet, satisfying: { degrees.contains($0.longitude) }, during: range, sampling: sampling)
-            }, reduce: intervalStitcher)
+                try TransitFinder.transits(using: eph, for: planet, satisfying: { degrees.contains($0.longitude) }, during: range, sampling: sampling)
+            }, reduce: TransitFinder.intervalStitcher)
         }
         result = try fixEdges(of: result, for: planet, through: degrees)
         return maxCount == nil ? result : Array(result[..<maxCount!])

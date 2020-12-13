@@ -11,7 +11,7 @@ import Foundation
 
 /**
  Encapsulation of logic to either run on a fixed thread or on the caller thread. Swiss Ephemeris uses thread-local store and so, the only way to encapsulate state is to run all swe_* functions on the same thread.
- - Important: `ThreadExecutor` itself is not thread-safe.
+ - Important: `ThreadExecutor` itself is not thread-safe. But within a single thread it is reentrant.
  */
 fileprivate final class ThreadExecutor: NSObject {
     private var useCaller: Bool
@@ -27,6 +27,7 @@ fileprivate final class ThreadExecutor: NSObject {
             start = DispatchSemaphore(value: 0)
             end = DispatchSemaphore(value: 0)
             thread = Thread(target: self, selector: #selector(self.threadMain), object: nil)
+            thread!.name = UUID().uuidString
             thread!.start()
         }
     }
@@ -46,7 +47,8 @@ fileprivate final class ThreadExecutor: NSObject {
     }
 
     fileprivate func execute(action: @escaping () -> Void) {
-        if useCaller {
+        // Make a single thread reentrant but deadlocks can still happen between different threads
+        if useCaller || Thread.current.name == thread!.name {
             action()
             return
         }
@@ -60,7 +62,6 @@ fileprivate final class ThreadExecutor: NSObject {
 public class IndicEphemeris {
     private let queue: DispatchQueue
     private let executor: ThreadExecutor
-    private var julian = 0.0
     let config: Config
     let dateUTC: Date
     let place: Place
@@ -81,7 +82,6 @@ public class IndicEphemeris {
         dateUTC = Calendar.current.date(byAdding: .second, value: -at.timezone.secondsFromGMT(for: date), to: date)!
         queue = DispatchQueue(label: "com.daivajnanam.IndicEphemeris", qos: .userInitiated, attributes: .concurrent, autoreleaseFrequency: .workItem)
         executor = ThreadExecutor(useCaller)
-        julian = try! julianDay()
         executor.execute {
             let path = (self.config.dataPath as NSString).utf8String
             swe_set_ephe_path(UnsafeMutablePointer<Int8>(mutating: path))
@@ -150,7 +150,7 @@ public class IndicEphemeris {
             let ordinal = planet == .SouthNode ? Planet.NorthNode.rawValue : planet.rawValue
             var retval: Int32 = 0
             executor.execute {
-                retval = swe_calc_ut(self.julian, Int32(ordinal), SEFLG_SWIEPH | SEFLG_TOPOCTR | SEFLG_SIDEREAL | SEFLG_SPEED, positions, error)
+                retval = swe_calc_ut(try! self.julianDay(for: date), Int32(ordinal), SEFLG_SWIEPH | SEFLG_TOPOCTR | SEFLG_SIDEREAL | SEFLG_SPEED, positions, error)
             }
             if retval < 0 {
                 throw EphemerisError.runtimeError(String(cString: error))
@@ -193,7 +193,7 @@ public class IndicEphemeris {
         for date in dates {
             var retval: Int32 = 0
             executor.execute {
-                retval = swe_pheno_ut(self.julian, Int32(planet.rawValue), SEFLG_TOPOCTR, response, error)
+                retval = swe_pheno_ut(try! self.julianDay(for: date), Int32(planet.rawValue), SEFLG_TOPOCTR, response, error)
             }
             if retval < 0 {
                 throw EphemerisError.runtimeError(String(cString: error))
@@ -224,7 +224,7 @@ public class IndicEphemeris {
         }
         var retval: Int32 = 0
         executor.execute {
-            retval = swe_houses_ex(self.julian, SEFLG_SIDEREAL, self.place.latitude, self.place.longitude, Int32(Character("W").asciiValue!), cusps, ascmc)
+            retval = swe_houses_ex(try! self.julianDay(for: self.dateUTC), SEFLG_SIDEREAL, self.place.latitude, self.place.longitude, Int32(Character("W").asciiValue!), cusps, ascmc)
         }
         if retval < 0 {
             throw EphemerisError.runtimeError("swe_houses_ex returned error for unknown reasons")

@@ -105,7 +105,7 @@ public class IndicEphemeris {
             calendarType = SE_JUL_CAL
         }
         #endif
-        let components = Calendar.current.dateComponents(in: TimeZone.init(secondsFromGMT: 0)!, from: target)
+        let components = Calendar.current.dateComponents(in: TimeZone(secondsFromGMT: 0)!, from: target)
         let times: UnsafeMutablePointer<Double> = UnsafeMutablePointer.allocate(capacity: 2)
         let error = UnsafeMutablePointer<Int8>.allocate(capacity: 256)
         defer {

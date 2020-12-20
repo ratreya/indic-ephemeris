@@ -96,11 +96,15 @@ class TransitFinderTest: XCTestCase {
     }
     
     func testTransits() throws {
-        for _ in 0...10 {
-            let birth = Date(timeIntervalSinceNow: Double.random(in: 311040000...3110400000))
-            let eph = IndicEphemeris(date: birth, at: Place(placeId: "Mysore", timezone: TimeZone(abbreviation: "IST")!, latitude: 12.3051828, longitude: 76.6553609, altitude: 746))
-            let moon = try eph.position(for: .Moon).houseLocation().house
-            _ = try TransitFinder(eph).transits(of: Planet.allCases[Int.random(in: 0..<9)], through: HouseRange(adjoining: moon), limit: .duration(DateInterval(start: Date(), duration: Double.random(in: 31104000...311040000))))
+        let birth = Date(timeIntervalSinceNow: Double.random(in: 311040000...3110400000))
+        let eph = IndicEphemeris(date: birth, at: Place(placeId: "Mysore", timezone: TimeZone(abbreviation: "IST")!, latitude: 12.3051828, longitude: 76.6553609, altitude: 746))
+        let moon = try eph.position(for: .Moon).houseLocation().house
+        let planet = Planet.allCases[(Int.random(in: 1..<9) + 1) % 9] // Random planet excluding the Moon
+        let moonRange = HouseRange(adjoining: moon)
+        let transits = try TransitFinder(eph).transits(of: planet, through: moonRange, limit: .count(from: birth, count: 3))
+        for transit in transits {
+            let timePositions = try eph.positions(for: planet, during: transit, every: 60*60)
+            XCTAssert(timePositions.allSatisfy({(date, position) -> Bool in moonRange.degrees.contains(position.longitude)}), "Failed \(planet) for \(transit)")
         }
     }
     

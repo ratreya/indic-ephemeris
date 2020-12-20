@@ -339,8 +339,8 @@ public class TransitFinder {
             range = value
         case .count(let from, let count):
             maxCount = abs(count)
-            // Average time it takes to complete `count` (+1, for safety) number of revolutions in seconds
-            let duration = planet.avgTime(for: Double(maxCount! + 1) * 360)
+            // Average time it takes to complete `count` (+2, for safety) number of revolutions in seconds
+            let duration = planet.avgTime(for: Double(maxCount! + 2) * 360)
             range = count < 0 ? DateInterval(start: from.advanced(by: -duration), duration: duration) : DateInterval(start: from, duration: duration)
         }
         var result: [DateInterval]

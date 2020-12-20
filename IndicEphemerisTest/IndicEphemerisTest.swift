@@ -18,7 +18,9 @@ class IndicEphemerisTest: XCTestCase {
     }
 
     func testJulianDate() throws {
-        XCTAssertEqual(try ephemeris!.julianDay(), 2458849.2708333, accuracy: 0.0001)
+        XCTAssertEqual(try ephemeris!.julianDay(), 2458849.2708333, accuracy: 0.00001)
+        let us = IndicEphemeris(date: Date(timeIntervalSince1970: 1577836800), at: Place(placeId: "San Francisco", timezone: TimeZone(abbreviation: "PST")!, latitude: 37.774929, longitude: -122.419418, altitude: 16))
+        XCTAssertEqual(try us.julianDay(), 2458849.8333333, accuracy: 0.00001)
     }
     
     func testMoon() throws {
@@ -58,9 +60,21 @@ class IndicEphemerisTest: XCTestCase {
         }
     }
     
-    func testNonProlepticDate() throws {
-        let date = ISO8601DateFormatter().date(from: "1300-02-29T10:10:00+0000")!
-        _ = try ephemeris?.julianDay(for: date)
+    func testProlepticDate() throws {
+        var date = ISO8601DateFormatter().date(from: "1582-10-01T00:00:00+0000")!
+        for _ in 0..<30 {
+            let old = try ephemeris!.julianDay(for: date)
+            print("\(date): \(old)")
+            date = date.advanced(by: Calendar.Component.day.seconds)
+            let new = try ephemeris!.julianDay(for: date)
+            print("\(date): \(new)")
+            XCTAssertEqual(old, new - 1)
+        }
+    }
+    
+    func testProlepticDateGap() throws {
+        let date = ISO8601DateFormatter().date(from: "1582-10-10T00:00:00+0000")!
+        XCTAssertEqual(try ephemeris!.julianDay(for: date), 2299165.5)
     }
 
     func XXXtestGetSpeeds() throws {
@@ -81,11 +95,10 @@ class IndicEphemerisTest: XCTestCase {
     }
     
     func testPerson() throws {
-        let date = ISO8601DateFormatter().date(from: "1987-08-04T18:18:00+0000")!
-        let place = Place(placeId: "Bengaluru", timezone: TimeZone(abbreviation: "IST")!, latitude: 12.97082225, longitude: 77.58582276, altitude: 918)
+        let date = ISO8601DateFormatter().date(from: "1977-06-09T20:50:00+0000")!
+        let place = Place(placeId: "Hyderabad", timezone: TimeZone(abbreviation: "IST")!, latitude: Double(degree: 17, minute: 23, second: 3), longitude: Double(degree: 78, minute: 27, second: 23), altitude: 515)
         let eph = IndicEphemeris(date: date, at: place)
-        let moon = try eph.position(for: .Moon)
-        print(try TransitFinder(eph).transits(of: .Saturn, through: HouseRange(adjoining: moon.houseLocation().house), limit: .count(from: Date().advanced(by: -Calendar.Component.year.seconds), count: 1)))
-        print(try DashaCalculator(eph).vimshottari())
+        XCTAssertEqual(try eph.ascendant().longitude, 263.67, accuracy: 0.1)
+        XCTAssertEqual(try eph.position(for: .Moon).longitude, 337.09, accuracy: 0.1)
     }
 }

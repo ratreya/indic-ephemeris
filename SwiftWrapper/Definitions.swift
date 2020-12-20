@@ -119,6 +119,10 @@ public enum Nakshatra: Int, CaseIterable {
 }
 
 extension Double {
+    init(degree: Int, minute: Int, second: Int) {
+        self.init(degree + minute/60 + second/3600)
+    }
+    
     var degreeMinuteSecond: (degree: Int, minute: Int, second: Int) {
         let seconds = Int(self * 3600)
         return (seconds / 3600, (seconds % 3600) / 60, (seconds % 3600) % 60)
